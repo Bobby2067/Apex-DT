@@ -897,7 +897,7 @@
         // ============================================
         // STATE
         // ============================================
-        let supabase = null;
+        let supabaseClient = null;
         let clerk = null;
         let currentUser = null;
         let dbUser = null;
@@ -944,7 +944,7 @@
         async function initApp() {
             try {
                 // Initialize Supabase
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
                 
                 // Wait for Clerk
                 await waitForClerk();
@@ -979,7 +979,7 @@
             try {
                 const token = await clerk.session.getToken({ template: 'supabase' });
                 if (token) {
-                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
                         global: { headers: { Authorization: `Bearer ${token}` } }
                     });
                 }
@@ -1010,7 +1010,7 @@
         async function getOrCreateDbUser() {
             try {
                 // Check if user exists
-                const { data: existingUser } = await supabase
+                const { data: existingUser } = await supabaseClient
                     .from('users')
                     .select('*')
                     .eq('clerk_user_id', currentUser.id)
@@ -1022,7 +1022,7 @@
                 }
                 
                 // Create new user
-                const { data: newUser, error } = await supabase
+                const { data: newUser, error } = await supabaseClient
                     .from('users')
                     .insert({
                         clerk_user_id: currentUser.id,
@@ -1412,7 +1412,7 @@
         // ============================================
         async function loadStudents() {
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('students')
                     .select('*')
                     .eq('is_archived', false)
@@ -1513,7 +1513,7 @@
         // ============================================
         async function loadUsers() {
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('users')
                     .select('*')
                     .order('created_at', { ascending: false });
@@ -1575,7 +1575,7 @@
         // ============================================
         async function loadAuditLog() {
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('audit_log')
                     .select('*')
                     .order('created_at', { ascending: false })
