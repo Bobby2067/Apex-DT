@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>APEX - P1 Eligibility System</title>
+    <meta name="description" content="APEX Driving School - P1 Eligibility Calculator and Student Management">
+    <meta name="theme-color" content="#020617">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Iconify -->
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    
+    <!-- Clerk Authentication -->
+    <script
+        async
+        crossorigin="anonymous"
+        data-clerk-publishable-key="pk_test_aHVtYW5lLWRpbm9zYXVyLTk2LmNsZXJrLmFjY291bnRzLmRldiQ"
+        src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+        type="text/javascript"
+    ></script>
+    
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Manrope', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { 
+            font-family: 'Manrope', sans-serif; 
+            background-color: #020617;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Noise Texture Overlay */
+        .bg-noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* Enhanced Glassmorphism */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.3);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            border-left: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.01);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .glass-panel:hover {
+            background: rgba(30, 41, 59, 0.4);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.3), 0 0 15px rgba(59, 130, 246, 0.1), inset 0 0 20px rgba(255, 255, 255, 0.02);
+            transform: translateY(-2px);
+        }
+        
+        .glass-panel-static {
+            background: rgba(15, 23, 42, 0.3);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .glass-input {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+            backdrop-filter: blur(4px);
+        }
+        .glass-input:focus {
+            background: rgba(0, 0, 0, 0.4);
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+            outline: none;
+        }
+        .glass-input.error {
+            border-color: rgba(239, 68, 68, 0.5);
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+        @keyframes float-delayed {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(20px) scale(0.95); }
+        }
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(20px); filter: blur(10px); }
+            to { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+
+        .animate-float { animation: float 10s ease-in-out infinite; }
+        .animate-float-delayed { animation: float-delayed 12s ease-in-out infinite reverse; }
+        .animate-enter { animation: slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; }
+        
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+
+        /* Custom UI Elements */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #facc15;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 0 20px rgba(250, 204, 21, 0.6), inset 0 2px 4px rgba(255,255,255,0.8);
+            border: 2px solid rgba(255,255,255,0.2);
+            transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+        }
+
+        .custom-checkbox:checked + div {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+            transform: scale(1.05);
+        }
+        .custom-checkbox + div svg { transition: all 0.2s ease; transform: scale(0.5); opacity: 0; }
+        .custom-checkbox:checked + div svg { transform: scale(1); opacity: 1; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+        .hidden { display: none !important; }
+        
+        /* Table styles */
+        .data-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .data-table th { 
+            text-align: left; padding: 12px 16px; font-size: 10px; font-weight: 700; 
+            text-transform: uppercase; letter-spacing: 0.1em; color: #64748b;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .data-table td { 
+            padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle;
+        }
+        .data-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+        
+        /* Mobile sidebar */
+        .sidebar-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px); z-index: 40; opacity: 0;
+            pointer-events: none; transition: opacity 0.3s;
+        }
+        .sidebar-overlay.active { opacity: 1; pointer-events: auto; }
+        
+        .mobile-sidebar {
+            position: fixed; top: 0; left: 0; bottom: 0; width: 280px;
+            transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 50;
+        }
+        .mobile-sidebar.active { transform: translateX(0); }
+        
+        /* Toast */
+        .toast-container {
+            position: fixed; bottom: 24px; right: 24px; z-index: 1000;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .toast {
+            padding: 16px 20px; border-radius: 12px; font-size: 14px; font-weight: 500;
+            animation: slideUpFade 0.3s ease forwards; display: flex; align-items: center; gap: 12px;
+        }
+        .toast-success { background: rgba(34, 197, 94, 0.9); color: white; }
+        .toast-error { background: rgba(239, 68, 68, 0.9); color: white; }
+        .toast-info { background: rgba(59, 130, 246, 0.9); color: white; }
+    </style>
+</head>
+<body class="selection:bg-blue-500/30 selection:text-blue-100">
+
+    <!-- Noise Overlay -->
+    <div class="bg-noise"></div>
+
+    <!-- Animated Ambient Background Blobs -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div class="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-blue-600/30 rounded-full blur-[120px] mix-blend-screen animate-float opacity-60"></div>
+        <div class="absolute bottom-[-20%] right-[-10%] w-[700px] h-[700px] bg-indigo-600/25 rounded-full blur-[130px] mix-blend-screen animate-float-delayed opacity-50"></div>
+        <div class="absolute top-[30%] right-[20%] w-[400px] h-[400px] bg-yellow-500/10 rounded-full blur-[100px] mix-blend-screen animate-pulse opacity-40"></div>
+        <div class="absolute bottom-[10%] left-[10%] w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-[100px] mix-blend-screen animate-float opacity-30"></div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- ==================== LOADING SCREEN ==================== -->
+    <div id="loadingScreen" class="min-h-screen flex items-center justify-center">
+        <div class="text-center">
+            <div class="relative w-20 h-20 mx-auto mb-6">
+                <div class="absolute inset-0 bg-blue-500 blur-xl opacity-40 rounded-2xl animate-pulse"></div>
+                <div class="relative w-full h-full rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 flex items-center justify-center">
+                    <span class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-200">A</span>
+                </div>
+            </div>
+            <p class="text-slate-400 text-sm">Loading APEX...</p>
+            <div class="mt-4 w-48 h-1 bg-slate-800 rounded-full overflow-hidden mx-auto">
+                <div class="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full animate-pulse" style="width: 60%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== AUTH SCREEN ==================== -->
+    <div id="authScreen" class="hidden min-h-screen flex items-center justify-center p-6 relative z-10">
+        <div class="w-full max-w-md">
+            <!-- Logo -->
+            <div class="text-center mb-10 animate-enter">
+                <div class="relative w-20 h-20 mx-auto mb-6">
+                    <div class="absolute inset-0 bg-blue-500 blur-xl opacity-40 rounded-2xl"></div>
+                    <div class="relative w-full h-full rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 flex items-center justify-center">
+                        <span class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-200">A</span>
+                    </div>
+                </div>
+                <h1 class="text-3xl font-bold text-white tracking-tight">APEX</h1>
+                <p class="text-slate-400 text-sm mt-2">P1 Eligibility System</p>
+            </div>
+
+            <!-- Auth Card -->
+            <div class="glass-panel rounded-3xl p-8 animate-enter delay-100">
+                <div id="clerk-auth"></div>
+                
+                <div class="mt-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                    <div class="flex items-start gap-3">
+                        <iconify-icon icon="solar:shield-keyhole-linear" class="text-amber-400 text-xl mt-0.5"></iconify-icon>
+                        <div>
+                            <p class="text-sm font-semibold text-amber-200">Secure Login</p>
+                            <p class="text-xs text-amber-300/70 mt-1">Two-factor authentication is required for all users to protect student data.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-center text-slate-500 text-xs mt-6">
+                <a href="privacy-policy.html" class="hover:text-slate-300 transition-colors">Privacy Policy</a>
+                <span class="mx-2">•</span>
+                <a href="terms.html" class="hover:text-slate-300 transition-colors">Terms of Service</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- ==================== MAIN APP ==================== -->
+    <div id="mainApp" class="hidden">
+        <div class="flex min-h-screen relative z-10">
+
+            <!-- Sidebar Overlay (Mobile) -->
+            <div id="sidebarOverlay" class="sidebar-overlay lg:hidden" onclick="closeSidebar()"></div>
+
+            <!-- Sidebar -->
+            <aside id="sidebar" class="mobile-sidebar lg:relative lg:transform-none flex flex-col w-72 lg:fixed inset-y-0 left-0 border-r border-white/5 bg-slate-950/80 lg:bg-slate-950/20 backdrop-blur-xl z-50 shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
+                
+                <!-- Logo -->
+                <div class="p-6 flex items-center gap-4 group">
+                    <div class="relative w-11 h-11 transition-transform group-hover:scale-110 duration-300">
+                        <div class="absolute inset-0 bg-blue-500 blur-lg opacity-40 rounded-xl group-hover:opacity-60 transition-opacity"></div>
+                        <div class="relative w-full h-full rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 flex items-center justify-center">
+                            <span class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-200">A</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-2xl text-white leading-none tracking-tight">APEX</h1>
+                        <span id="sidebarRoleBadge" class="text-[10px] font-semibold tracking-[0.2em] uppercase opacity-80 text-green-400">Student</span>
+                    </div>
+                    <button class="lg:hidden ml-auto text-slate-400 hover:text-white" onclick="closeSidebar()">
+                        <iconify-icon icon="solar:close-circle-linear" width="24"></iconify-icon>
+                    </button>
+                </div>
+
+                <!-- Navigation -->
+                <nav id="sidebarNav" class="flex-1 px-4 space-y-2 mt-2 overflow-y-auto"></nav>
+
+                <!-- User Profile -->
+                <div class="p-4 border-t border-white/5 bg-gradient-to-t from-black/20 to-transparent">
+                    <div class="glass-panel-static p-3 rounded-2xl flex items-center gap-3 hover:bg-white/5 cursor-pointer transition-colors" onclick="toggleUserMenu()">
+                        <div id="userAvatar" class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-bold shadow-lg ring-2 ring-white/10">U</div>
+                        <div class="flex-1 overflow-hidden">
+                            <div id="userName" class="text-sm font-semibold text-white truncate">User</div>
+                            <div id="userEmail" class="text-[10px] text-slate-400 truncate">user@example.com</div>
+                        </div>
+                        <iconify-icon icon="solar:alt-arrow-down-linear" class="text-slate-400"></iconify-icon>
+                    </div>
+                    
+                    <!-- User Menu Dropdown -->
+                    <div id="userMenuDropdown" class="hidden mt-2 glass-panel rounded-xl overflow-hidden">
+                        <button onclick="signOut()" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors">
+                            <iconify-icon icon="solar:logout-2-linear" width="18"></iconify-icon>
+                            Sign Out
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="lg:ml-72 w-full min-h-screen relative z-10">
+                
+                <!-- Mobile Header -->
+                <div class="lg:hidden sticky top-0 z-30 glass-panel-static p-4 flex items-center justify-between">
+                    <button onclick="openSidebar()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white">
+                        <iconify-icon icon="solar:hamburger-menu-linear" width="20"></iconify-icon>
+                    </button>
+                    <span class="font-bold text-white">APEX</span>
+                    <div id="mobileUserAvatar" class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-bold">U</div>
+                </div>
+
+                <!-- Page Content Container -->
+                <div class="p-6 lg:p-10 max-w-[1600px] mx-auto">
+                    
+                    <!-- ========== CALCULATOR PAGE ========== -->
+                    <div id="page-calculator" class="page-content">
+                        <!-- Header -->
+                        <header class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 animate-enter">
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-2 text-xs font-semibold text-blue-400 uppercase tracking-widest opacity-80">
+                                    <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+                                    Overview
+                                </div>
+                                <h2 class="text-3xl lg:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400 tracking-tight">Eligibility Calculator</h2>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button onclick="resetCalculator()" class="group flex items-center gap-2 bg-slate-800/40 hover:bg-slate-700/60 backdrop-blur-md text-slate-300 hover:text-white px-5 py-2.5 rounded-xl border border-white/10 transition-all text-sm font-semibold shadow-lg">
+                                    <iconify-icon icon="solar:restart-linear" width="18" class="group-hover:-rotate-180 transition-transform duration-500"></iconify-icon>
+                                    Reset
+                                </button>
+                            </div>
+                        </header>
+
+                        <!-- Calculator Grid -->
+                        <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                            
+                            <!-- Left Column -->
+                            <div class="xl:col-span-7 space-y-6">
+                                
+                                <!-- Student Info Card -->
+                                <div class="glass-panel rounded-3xl p-8 animate-enter delay-100">
+                                    <h3 class="text-xl font-semibold text-white flex items-center gap-3 mb-6">
+                                        <div class="p-2 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/20">
+                                            <iconify-icon icon="solar:user-linear" width="20"></iconify-icon>
+                                        </div>
+                                        Student Information
+                                    </h3>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 block">Full Name</label>
+                                            <input type="text" id="calcStudentName" placeholder="Enter student name" class="w-full glass-input text-white px-4 py-3 rounded-xl">
+                                        </div>
+                                        <div>
+                                            <label class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 block">Date of Birth</label>
+                                            <input type="date" id="calcDob" class="w-full glass-input text-white px-4 py-3 rounded-xl" onchange="calculateAll()">
+                                        </div>
+                                        <div>
+                                            <label class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 block">Licence Expiry</label>
+                                            <input type="date" id="calcExpiryDate" class="w-full glass-input text-white px-4 py-3 rounded-xl" onchange="calculateAll()">
+                                            <p class="text-[10px] text-slate-500 mt-2">Issue date = Expiry - 5 years</p>
+                                        </div>
+                                        <div>
+                                            <label class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 block">Licence Number</label>
+                                            <input type="text" id="calcLicenceNumber" placeholder="e.g. 123456" class="w-full glass-input text-white px-4 py-3 rounded-xl">
+                                        </div>
+                                    </div>
+
+                                    <!-- Info Strip -->
+                                    <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3">
+                                        <div class="col-span-2 p-4 rounded-2xl bg-gradient-to-r from-slate-800/50 to-slate-900/50 border border-white/5 backdrop-blur-md flex items-center justify-between group hover:border-white/10 transition-colors">
+                                            <div class="flex flex-col">
+                                                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Current Age</span>
+                                                <span id="calcCurrentAge" class="text-lg font-bold text-white group-hover:text-blue-200 transition-colors">--</span>
+                                            </div>
+                                            <div class="h-8 w-8 rounded-full bg-slate-700/50 flex items-center justify-center text-slate-300">
+                                                <iconify-icon icon="solar:calendar-linear"></iconify-icon>
+                                            </div>
+                                        </div>
+                                        <div id="calcPathwayBadge" class="col-span-2 p-4 rounded-2xl bg-slate-500/10 border border-slate-500/20 backdrop-blur-md flex items-center justify-between group hover:bg-slate-500/20 transition-colors">
+                                            <div class="flex flex-col">
+                                                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Licence Class</span>
+                                                <span id="calcPathwayText" class="text-lg font-bold text-white drop-shadow-sm">--</span>
+                                            </div>
+                                            <iconify-icon id="calcPathwayIcon" icon="solar:question-circle-linear" class="text-slate-400 text-xl"></iconify-icon>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Hours Input -->
+                                <div class="glass-panel rounded-3xl p-8 animate-enter delay-200">
+                                    <h3 class="text-xl font-semibold text-white flex items-center gap-3 mb-8">
+                                        <div class="p-2 rounded-lg bg-yellow-500/20 text-yellow-400 border border-yellow-500/20">
+                                            <iconify-icon icon="solar:clock-circle-linear" width="20"></iconify-icon>
+                                        </div>
+                                        Driving Hours
+                                    </h3>
+
+                                    <div class="space-y-10">
+                                        <!-- Supervised Hours -->
+                                        <div class="relative group">
+                                            <div class="flex justify-between mb-4">
+                                                <label class="text-sm font-semibold text-slate-300 group-hover:text-white transition-colors">Supervised Day Hours</label>
+                                                <span id="calcSupHoursDisplay" class="text-sm font-mono font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">0 hrs</span>
+                                            </div>
+                                            <input type="range" id="calcSupHours" min="0" max="100" value="0" step="0.5" class="w-full" oninput="updateHoursDisplay(); calculateHours()">
+                                            <div class="flex justify-between mt-2 text-[10px] text-slate-600 font-bold uppercase tracking-widest">
+                                                <span>0</span><span>50</span><span>100</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Night Hours -->
+                                        <div class="relative group">
+                                            <div class="flex justify-between mb-4">
+                                                <label class="text-sm font-semibold text-slate-300 group-hover:text-white transition-colors">Night Hours <span class="text-slate-500 font-normal ml-1">(Min <span id="calcNightReqLabel">10</span>)</span></label>
+                                                <span id="calcNightHoursDisplay" class="text-sm font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">0 hrs</span>
+                                            </div>
+                                            <input type="range" id="calcNightHours" min="0" max="20" value="0" step="0.5" class="w-full" oninput="updateHoursDisplay(); calculateHours()">
+                                        </div>
+
+                                        <!-- Professional Hours -->
+                                        <div class="p-5 rounded-2xl bg-white/5 border border-white/5">
+                                            <label class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 block">Professional Lessons (3-for-1)</label>
+                                            <div class="flex items-center gap-4">
+                                                <button onclick="adjustProfHours(-0.5)" class="w-12 h-12 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 flex items-center justify-center transition-all active:scale-95">
+                                                    <iconify-icon icon="solar:minus-linear" width="20"></iconify-icon>
+                                                </button>
+                                                <input type="number" id="calcProfHours" value="0" min="0" max="10" step="0.5" class="flex-1 glass-input text-center text-white text-xl font-bold h-12 rounded-xl font-mono" oninput="calculateHours()">
+                                                <button onclick="adjustProfHours(0.5)" class="w-12 h-12 rounded-xl bg-blue-600 border border-blue-400/50 text-white hover:bg-blue-500 flex items-center justify-center transition-all active:scale-95">
+                                                    <iconify-icon icon="solar:add-linear" width="20"></iconify-icon>
+                                                </button>
+                                            </div>
+                                            <div class="mt-4 flex items-center justify-between p-3 rounded-lg bg-black/20 border border-white/5">
+                                                <span class="text-xs text-slate-500 font-medium">Applied Credit</span>
+                                                <span id="calcProfCredit" class="text-sm font-bold text-green-400">+0 Hours Added</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Credits & Mandatory Checklist -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 animate-enter delay-300">
+                                    <!-- Credits -->
+                                    <div class="glass-panel rounded-3xl p-6">
+                                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                            <iconify-icon icon="solar:star-linear" class="text-yellow-400"></iconify-icon> Credits
+                                        </h4>
+                                        <div class="space-y-4">
+                                            <label class="flex items-center gap-4 cursor-pointer group">
+                                                <div class="relative">
+                                                    <input type="checkbox" id="calcSaferDriver" class="hidden custom-checkbox" onchange="calculateHours()">
+                                                    <div class="w-6 h-6 rounded-md border border-slate-600 bg-black/20 flex items-center justify-center transition-all group-hover:border-blue-500 shadow-inner">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <span class="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">Safer Driver Course</span>
+                                                    <span class="block text-[10px] text-green-400 font-bold">+20 Hours</span>
+                                                </div>
+                                            </label>
+                                            <label class="flex items-center gap-4 cursor-pointer group">
+                                                <div class="relative">
+                                                    <input type="checkbox" id="calcVru" class="hidden custom-checkbox" onchange="calculateHours()">
+                                                    <div class="w-6 h-6 rounded-md border border-slate-600 bg-black/20 flex items-center justify-center transition-all group-hover:border-blue-500 shadow-inner">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <span class="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">Vulnerable Road User</span>
+                                                    <span class="block text-[10px] text-green-400 font-bold">+10 Hours</span>
+                                                </div>
+                                            </label>
+                                            <label class="flex items-center gap-4 cursor-pointer group">
+                                                <div class="relative">
+                                                    <input type="checkbox" id="calcFirstAid" class="hidden custom-checkbox" onchange="calculateHours()">
+                                                    <div class="w-6 h-6 rounded-md border border-slate-600 bg-black/20 flex items-center justify-center transition-all group-hover:border-blue-500 shadow-inner">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <span class="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">First Aid Certificate</span>
+                                                    <span class="block text-[10px] text-green-400 font-bold">+5 Hours</span>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Mandatory Assessments -->
+                                    <div class="glass-panel rounded-3xl p-6">
+                                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                            <iconify-icon icon="solar:diploma-verified-linear" class="text-blue-400"></iconify-icon> Mandatory
+                                        </h4>
+                                        <div class="space-y-3">
+                                            <!-- HPT with Number -->
+                                            <div class="p-3 rounded-xl bg-black/20 border border-white/5">
+                                                <label class="flex items-center justify-between cursor-pointer group mb-3">
+                                                    <span class="text-sm text-slate-300 font-medium group-hover:text-white">Hazard Perception Test</span>
+                                                    <div class="relative">
+                                                        <input type="checkbox" id="calcHpt" class="hidden" onchange="toggleHptNumber(); calculateAll()">
+                                                        <div id="calcHptToggle" class="w-5 h-5 rounded-full border-2 border-slate-600 group-hover:border-blue-400 transition-colors flex items-center justify-center">
+                                                            <div class="w-2.5 h-2.5 rounded-full bg-blue-500 scale-0 transition-transform"></div>
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                                <div id="hptNumberContainer" class="hidden">
+                                                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">HPT Certificate Number <span class="text-red-400">*</span></label>
+                                                    <input type="text" id="calcHptNumber" placeholder="Enter HPT number" class="w-full glass-input text-white px-3 py-2 rounded-lg text-sm" oninput="validateHpt()">
+                                                    <p id="hptError" class="hidden text-[10px] text-red-400 mt-1">HPT number is required</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <label class="flex items-center justify-between cursor-pointer p-3 rounded-xl bg-black/20 border border-white/5 hover:bg-white/5 transition-all group">
+                                                <span class="text-sm text-slate-300 font-medium group-hover:text-white">CBT&A Complete</span>
+                                                <div class="relative">
+                                                    <input type="checkbox" id="calcCbta" class="hidden" onchange="calculateAll()">
+                                                    <div id="calcCbtaToggle" class="w-5 h-5 rounded-full border-2 border-slate-600 group-hover:border-blue-400 transition-colors flex items-center justify-center">
+                                                        <div class="w-2.5 h-2.5 rounded-full bg-blue-500 scale-0 transition-transform"></div>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                            <label class="flex items-center justify-between cursor-pointer p-3 rounded-xl bg-black/20 border border-white/5 hover:bg-white/5 transition-all group">
+                                                <span class="text-sm text-slate-300 font-medium group-hover:text-white">1-22 Assessment</span>
+                                                <div class="relative">
+                                                    <input type="checkbox" id="calcReview" class="hidden" onchange="calculateAll()">
+                                                    <div id="calcReviewToggle" class="w-5 h-5 rounded-full border-2 border-slate-600 group-hover:border-blue-400 transition-colors flex items-center justify-center">
+                                                        <div class="w-2.5 h-2.5 rounded-full bg-blue-500 scale-0 transition-transform"></div>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column (Status) -->
+                            <div class="xl:col-span-5 space-y-6">
+                                <div class="sticky top-10">
+                                    
+                                    <!-- Main Status Card -->
+                                    <div class="glass-panel rounded-3xl p-10 text-center relative overflow-hidden animate-enter delay-200">
+                                        <div class="absolute inset-0 bg-gradient-to-b from-slate-800/30 to-slate-950/80 pointer-events-none"></div>
+                                        <div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent opacity-50"></div>
+                                        
+                                        <!-- Gauge -->
+                                        <div class="relative w-56 h-56 mx-auto mb-8 group">
+                                            <div id="gaugeGlow" class="absolute inset-0 bg-blue-500/20 rounded-full blur-3xl transition-colors duration-500"></div>
+                                            <svg class="w-full h-full transform -rotate-90 relative z-10">
+                                                <circle cx="112" cy="112" r="88" fill="transparent" stroke="rgba(255,255,255,0.05)" stroke-width="12" stroke-linecap="round"></circle>
+                                                <circle id="gaugeCircle" cx="112" cy="112" r="88" fill="transparent" stroke="#3b82f6" stroke-width="12" stroke-dasharray="553" stroke-dashoffset="553" stroke-linecap="round" class="drop-shadow-[0_0_15px_rgba(59,130,246,0.6)] transition-all duration-1000"></circle>
+                                            </svg>
+                                            <div class="absolute inset-0 flex flex-col items-center justify-center z-20">
+                                                <span id="gaugeTotalHours" class="text-6xl font-extrabold text-white tracking-tighter drop-shadow-lg">0</span>
+                                                <span class="text-[10px] text-blue-300 font-bold uppercase tracking-[0.2em] mt-2 border-t border-blue-500/30 pt-2">Total Hours</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="space-y-3 mb-10 relative z-10">
+                                            <h2 id="statusTitle" class="text-3xl font-bold text-white drop-shadow-md">Not Eligible</h2>
+                                            <div id="statusBadge" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-500/10 border border-red-500/20">
+                                                <div class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
+                                                <span class="text-xs text-red-300 font-semibold">Enter details above</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Date Prediction -->
+                                        <div class="p-5 rounded-2xl bg-black/30 border border-white/5 mb-8 backdrop-blur-sm relative group hover:border-white/10 transition-colors">
+                                            <div class="flex justify-between items-center mb-2">
+                                                <span class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Earliest Test Date</span>
+                                                <iconify-icon icon="solar:calendar-date-linear" class="text-slate-500"></iconify-icon>
+                                            </div>
+                                            <div id="earliestDateDisplay" class="text-2xl font-mono font-bold text-white tracking-tight">--</div>
+                                            <div id="countdownDisplay" class="text-xs text-slate-500 mt-1"></div>
+                                        </div>
+
+                                        <!-- Book Test Button -->
+                                        <button id="bookDriveBtn" onclick="navigateTo('booking')" disabled class="w-full py-4 rounded-2xl bg-slate-800/40 backdrop-blur-md text-slate-500 font-bold border border-white/5 cursor-not-allowed flex items-center justify-center gap-3 transition-all">
+                                            <span>Book Driving Test</span>
+                                            <iconify-icon icon="solar:lock-keyhole-minimalistic-linear" class="text-lg"></iconify-icon>
+                                        </button>
+                                    </div>
+
+                                    <!-- Mini Stats Grid -->
+                                    <div class="grid grid-cols-2 gap-5 mt-6 animate-enter delay-300">
+                                        <div class="glass-panel !bg-gradient-to-br !from-blue-600/10 !to-blue-900/10 rounded-2xl p-5 text-white relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+                                            <div class="absolute -right-6 -top-6 text-blue-500 opacity-10 group-hover:opacity-20 transition-all duration-500 rotate-12">
+                                                <iconify-icon icon="solar:sun-2-bold" width="100"></iconify-icon>
+                                            </div>
+                                            <div class="relative z-10">
+                                                <div id="statDayHours" class="text-4xl font-bold mb-1 tracking-tighter">0</div>
+                                                <div class="text-[10px] font-bold text-blue-200 uppercase tracking-widest opacity-70">Day Hours</div>
+                                            </div>
+                                        </div>
+                                        <div class="glass-panel !bg-gradient-to-br !from-amber-600/10 !to-amber-900/10 rounded-2xl p-5 text-white relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+                                            <div class="absolute -right-6 -top-6 text-amber-500 opacity-10 group-hover:opacity-20 transition-all duration-500 -rotate-12">
+                                                <iconify-icon icon="solar:moon-stars-bold" width="100"></iconify-icon>
+                                            </div>
+                                            <div class="relative z-10">
+                                                <div id="statNightHours" class="text-4xl font-bold mb-1 tracking-tighter text-amber-100">0</div>
+                                                <div class="text-[10px] font-bold text-amber-200 uppercase tracking-widest opacity-70">Night Hours</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== STUDENTS PAGE ========== -->
+                    <div id="page-students" class="page-content hidden">
+                        <header class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-2 text-xs font-semibold text-blue-400 uppercase tracking-widest opacity-80">
+                                    <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+                                    Management
+                                </div>
+                                <h2 class="text-3xl lg:text-4xl font-bold text-white tracking-tight">Students</h2>
+                            </div>
+                            <button onclick="showAddStudent()" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-semibold transition-all">
+                                <iconify-icon icon="solar:add-circle-linear" width="20"></iconify-icon>
+                                Add Student
+                            </button>
+                        </header>
+
+                        <!-- Stats Cards -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                            <div class="glass-panel rounded-2xl p-5">
+                                <div class="text-3xl font-bold text-white" id="statTotalStudents">0</div>
+                                <div class="text-xs text-slate-400 font-medium">Total Students</div>
+                            </div>
+                            <div class="glass-panel rounded-2xl p-5">
+                                <div class="text-3xl font-bold text-green-400" id="statEligibleStudents">0</div>
+                                <div class="text-xs text-slate-400 font-medium">Eligible</div>
+                            </div>
+                            <div class="glass-panel rounded-2xl p-5">
+                                <div class="text-3xl font-bold text-amber-400" id="statPendingStudents">0</div>
+                                <div class="text-xs text-slate-400 font-medium">Pending</div>
+                            </div>
+                            <div class="glass-panel rounded-2xl p-5">
+                                <div class="text-3xl font-bold text-blue-400" id="statNewStudents">0</div>
+                                <div class="text-xs text-slate-400 font-medium">This Month</div>
+                            </div>
+                        </div>
+
+                        <!-- Students Table -->
+                        <div class="glass-panel rounded-3xl overflow-hidden">
+                            <div class="p-6 border-b border-white/5 flex flex-col md:flex-row gap-4 justify-between">
+                                <input type="text" id="studentSearch" placeholder="Search students..." class="glass-input text-white px-4 py-2.5 rounded-xl w-full md:w-80" oninput="filterStudents()">
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr class="bg-black/20">
+                                            <th>Student</th>
+                                            <th>Licence</th>
+                                            <th>Progress</th>
+                                            <th>Status</th>
+                                            <th>Eligible Date</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="studentTableBody"></tbody>
+                                </table>
+                            </div>
+                            <div id="studentsEmptyState" class="hidden p-12 text-center">
+                                <iconify-icon icon="solar:users-group-rounded-linear" width="48" class="text-slate-600 mb-4"></iconify-icon>
+                                <p class="text-slate-400">No students yet. Add your first student to get started.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== BOOKING PAGE ========== -->
+                    <div id="page-booking" class="page-content hidden">
+                        <header class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-2 text-xs font-semibold text-green-400 uppercase tracking-widest opacity-80">
+                                    <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                                    Scheduling
+                                </div>
+                                <h2 class="text-3xl lg:text-4xl font-bold text-white tracking-tight">Book Driving Test</h2>
+                            </div>
+                        </header>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <!-- Info Panel -->
+                            <div class="glass-panel rounded-3xl p-8">
+                                <h3 class="text-xl font-semibold text-white mb-6 flex items-center gap-3">
+                                    <div class="p-2 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/20">
+                                        <iconify-icon icon="solar:info-circle-linear" width="20"></iconify-icon>
+                                    </div>
+                                    Before You Book
+                                </h3>
+                                
+                                <div class="space-y-4">
+                                    <div class="p-4 rounded-xl bg-white/5 border border-white/5">
+                                        <h4 class="font-semibold text-white mb-2">Requirements Checklist</h4>
+                                        <ul class="space-y-2 text-sm text-slate-300">
+                                            <li class="flex items-center gap-2">
+                                                <iconify-icon icon="solar:check-circle-linear" class="text-green-400"></iconify-icon>
+                                                100 hours supervised driving (under 25) OR 50 hours (25+)
+                                            </li>
+                                            <li class="flex items-center gap-2">
+                                                <iconify-icon icon="solar:check-circle-linear" class="text-green-400"></iconify-icon>
+                                                10 hours night driving (under 25) OR 5 hours (25+)
+                                            </li>
+                                            <li class="flex items-center gap-2">
+                                                <iconify-icon icon="solar:check-circle-linear" class="text-green-400"></iconify-icon>
+                                                Hazard Perception Test passed
+                                            </li>
+                                            <li class="flex items-center gap-2">
+                                                <iconify-icon icon="solar:check-circle-linear" class="text-green-400"></iconify-icon>
+                                                CBT&A completed with driving instructor
+                                            </li>
+                                            <li class="flex items-center gap-2">
+                                                <iconify-icon icon="solar:check-circle-linear" class="text-green-400"></iconify-icon>
+                                                12 months tenure on learner licence (under 25) OR 6 months (25+)
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                                        <h4 class="font-semibold text-amber-200 mb-2 flex items-center gap-2">
+                                            <iconify-icon icon="solar:document-text-linear"></iconify-icon>
+                                            What to Bring
+                                        </h4>
+                                        <ul class="space-y-1 text-sm text-amber-300/80">
+                                            <li>• Current learner licence</li>
+                                            <li>• Completed logbook with 100/50 hours</li>
+                                            <li>• HPT certificate</li>
+                                            <li>• CBT&A certificate</li>
+                                            <li>• Registered, insured vehicle</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Booking Options -->
+                            <div class="space-y-6">
+                                <div class="glass-panel rounded-3xl p-8">
+                                    <h3 class="text-xl font-semibold text-white mb-6 flex items-center gap-3">
+                                        <div class="p-2 rounded-lg bg-green-500/20 text-green-400 border border-green-500/20">
+                                            <iconify-icon icon="solar:calendar-mark-linear" width="20"></iconify-icon>
+                                        </div>
+                                        Book via Access Canberra
+                                    </h3>
+                                    
+                                    <p class="text-slate-300 text-sm mb-6">
+                                        Driving tests are booked through the ACT Government's Access Canberra portal. 
+                                        You'll need to create an account or sign in to book your test.
+                                    </p>
+                                    
+                                    <a href="https://www.accesscanberra.act.gov.au/s/article/book-a-driving-test-tab-overview" 
+                                       target="_blank" 
+                                       rel="noopener noreferrer"
+                                       class="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white px-6 py-4 rounded-2xl font-bold transition-all shadow-lg hover:shadow-green-500/20">
+                                        <iconify-icon icon="solar:link-round-linear" width="20"></iconify-icon>
+                                        Book on Access Canberra
+                                        <iconify-icon icon="solar:arrow-right-up-linear" width="18"></iconify-icon>
+                                    </a>
+                                    
+                                    <div class="mt-4 p-3 rounded-xl bg-white/5 border border-white/5 text-center">
+                                        <p class="text-xs text-slate-400">Opens in a new window • Official ACT Government site</p>
+                                    </div>
+                                </div>
+
+                                <div class="glass-panel rounded-3xl p-8">
+                                    <h3 class="text-lg font-semibold text-white mb-4">Useful Links</h3>
+                                    <div class="space-y-3">
+                                        <a href="https://www.accesscanberra.act.gov.au/s/article/learner-licence-tab-overview" target="_blank" class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors group">
+                                            <span class="text-sm text-slate-300 group-hover:text-white">Learner Licence Info</span>
+                                            <iconify-icon icon="solar:arrow-right-linear" class="text-slate-400 group-hover:text-white"></iconify-icon>
+                                        </a>
+                                        <a href="https://www.accesscanberra.act.gov.au/s/article/provisional-p1-and-p2-licences-tab-overview" target="_blank" class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors group">
+                                            <span class="text-sm text-slate-300 group-hover:text-white">Provisional Licence Info</span>
+                                            <iconify-icon icon="solar:arrow-right-linear" class="text-slate-400 group-hover:text-white"></iconify-icon>
+                                        </a>
+                                        <a href="https://www.accesscanberra.act.gov.au/s/article/hazard-perception-test-tab-overview" target="_blank" class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors group">
+                                            <span class="text-sm text-slate-300 group-hover:text-white">Hazard Perception Test</span>
+                                            <iconify-icon icon="solar:arrow-right-linear" class="text-slate-400 group-hover:text-white"></iconify-icon>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== USERS PAGE (Admin Only) ========== -->
+                    <div id="page-users" class="page-content hidden">
+                        <header class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-2 text-xs font-semibold text-red-400 uppercase tracking-widest opacity-80">
+                                    <span class="w-2 h-2 rounded-full bg-red-400 animate-pulse"></span>
+                                    Admin
+                                </div>
+                                <h2 class="text-3xl lg:text-4xl font-bold text-white tracking-tight">User Management</h2>
+                            </div>
+                        </header>
+
+                        <div class="glass-panel rounded-3xl overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr class="bg-black/20">
+                                            <th>User</th>
+                                            <th>Role</th>
+                                            <th>Status</th>
+                                            <th>MFA</th>
+                                            <th>Last Login</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="usersTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== AUDIT LOG PAGE (Admin Only) ========== -->
+                    <div id="page-audit" class="page-content hidden">
+                        <header class="mb-10">
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-2 text-xs font-semibold text-red-400 uppercase tracking-widest opacity-80">
+                                    <span class="w-2 h-2 rounded-full bg-red-400 animate-pulse"></span>
+                                    Admin
+                                </div>
+                                <h2 class="text-3xl lg:text-4xl font-bold text-white tracking-tight">Audit Log</h2>
+                            </div>
+                        </header>
+
+                        <div class="glass-panel rounded-3xl overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr class="bg-black/20">
+                                            <th>Timestamp</th>
+                                            <th>User</th>
+                                            <th>Action</th>
+                                            <th>Details</th>
+                                            <th>IP Address</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="auditTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const SUPABASE_URL = 'https://achivnjcqesuwusfgmcz.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjaGl2bmpjcWVzdXd1c2ZnbWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4NDAyMjYsImV4cCI6MjA4NTQxNjIyNn0.e9eLpVxTGGfBgKm0RILkW7WJ0-ddqdbgLyYTHNuBdbs';
+        
+        // ============================================
+        // STATE
+        // ============================================
+        let supabase = null;
+        let clerk = null;
+        let currentUser = null;
+        let dbUser = null;
+        let userRole = 'student';
+        let students = [];
+        let users = [];
+        let auditLogs = [];
+        
+        // Calculator state
+        let calcState = {
+            isUnder25: true,
+            hoursReq: 100,
+            nightReq: 10,
+            tenureMonths: 12,
+            issueDate: null,
+            dob: null,
+            totalHours: 0,
+            hptNumber: ''
+        };
+
+        // Navigation config per role
+        const navConfig = {
+            student: [
+                { id: 'calculator', icon: 'solar:calculator-minimalistic-linear', label: 'Calculator' }
+            ],
+            instructor: [
+                { id: 'calculator', icon: 'solar:calculator-minimalistic-linear', label: 'Calculator' },
+                { id: 'students', icon: 'solar:users-group-rounded-linear', label: 'Students' },
+                { id: 'booking', icon: 'solar:calendar-mark-linear', label: 'Book Test' }
+            ],
+            admin: [
+                { id: 'calculator', icon: 'solar:calculator-minimalistic-linear', label: 'Calculator' },
+                { id: 'students', icon: 'solar:users-group-rounded-linear', label: 'Students' },
+                { id: 'booking', icon: 'solar:calendar-mark-linear', label: 'Book Test' },
+                { id: 'divider', label: 'Admin' },
+                { id: 'users', icon: 'solar:shield-user-linear', label: 'User Management', admin: true },
+                { id: 'audit', icon: 'solar:clipboard-list-linear', label: 'Audit Log', admin: true }
+            ]
+        };
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        async function initApp() {
+            try {
+                // Initialize Supabase
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                
+                // Wait for Clerk
+                await waitForClerk();
+                
+                if (clerk.user) {
+                    await handleSignedIn();
+                } else {
+                    showAuthScreen();
+                }
+            } catch (error) {
+                console.error('Init error:', error);
+                showToast('Failed to initialize app', 'error');
+            }
+        }
+        
+        function waitForClerk() {
+            return new Promise((resolve) => {
+                const checkClerk = setInterval(() => {
+                    if (window.Clerk) {
+                        clearInterval(checkClerk);
+                        clerk = window.Clerk;
+                        clerk.load().then(resolve);
+                    }
+                }, 100);
+            });
+        }
+        
+        async function handleSignedIn() {
+            currentUser = clerk.user;
+            
+            // Get Supabase token from Clerk
+            try {
+                const token = await clerk.session.getToken({ template: 'supabase' });
+                if (token) {
+                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                        global: { headers: { Authorization: `Bearer ${token}` } }
+                    });
+                }
+            } catch (e) {
+                console.warn('Could not get Supabase token:', e);
+            }
+            
+            // Get/create user in database
+            await getOrCreateDbUser();
+            
+            userRole = dbUser?.role || 'student';
+            
+            updateUserDisplay();
+            buildNavigation();
+            
+            if (userRole === 'instructor' || userRole === 'admin') {
+                await loadStudents();
+            }
+            if (userRole === 'admin') {
+                await loadUsers();
+                await loadAuditLog();
+            }
+            
+            showMainApp();
+            navigateTo('calculator');
+        }
+        
+        async function getOrCreateDbUser() {
+            try {
+                // Check if user exists
+                const { data: existingUser } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('clerk_user_id', currentUser.id)
+                    .single();
+                
+                if (existingUser) {
+                    dbUser = existingUser;
+                    return;
+                }
+                
+                // Create new user
+                const { data: newUser, error } = await supabase
+                    .from('users')
+                    .insert({
+                        clerk_user_id: currentUser.id,
+                        email: currentUser.primaryEmailAddress?.emailAddress || '',
+                        instructor_name: currentUser.fullName || currentUser.firstName || 'User',
+                        role: 'student',
+                        mfa_enabled: currentUser.twoFactorEnabled || false
+                    })
+                    .select()
+                    .single();
+                
+                if (!error) dbUser = newUser;
+            } catch (error) {
+                console.error('Error with db user:', error);
+                dbUser = { instructor_name: currentUser.fullName || 'User', role: 'student' };
+            }
+        }
+        
+        function updateUserDisplay() {
+            const name = dbUser?.instructor_name || currentUser?.fullName || 'User';
+            const email = currentUser?.primaryEmailAddress?.emailAddress || '';
+            const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            
+            document.getElementById('userName').textContent = name;
+            document.getElementById('userEmail').textContent = email;
+            document.getElementById('userAvatar').textContent = initials;
+            document.getElementById('mobileUserAvatar').textContent = initials;
+            
+            const roleBadge = document.getElementById('sidebarRoleBadge');
+            const roleLabels = { student: 'Student', instructor: 'Instructor', admin: 'Admin' };
+            const roleColors = { student: 'text-green-400', instructor: 'text-blue-400', admin: 'text-red-400' };
+            roleBadge.textContent = roleLabels[userRole] || 'User';
+            roleBadge.className = `text-[10px] font-semibold tracking-[0.2em] uppercase opacity-80 ${roleColors[userRole] || ''}`;
+        }
+        
+        function buildNavigation() {
+            const nav = document.getElementById('sidebarNav');
+            const items = navConfig[userRole] || navConfig.student;
+            
+            nav.innerHTML = items.map(item => {
+                if (item.id === 'divider') {
+                    return `<div class="pt-6 pb-2"><span class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">${item.label}</span></div>`;
+                }
+                const isAdmin = item.admin;
+                return `
+                    <a href="#" onclick="navigateTo('${item.id}'); return false;" id="nav-${item.id}"
+                       class="nav-item group flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-300">
+                        <iconify-icon icon="${item.icon}" width="22" class="group-hover:scale-110 transition-transform duration-300 ${isAdmin ? 'text-red-400' : ''}"></iconify-icon>
+                        <span class="font-medium text-sm">${item.label}</span>
+                    </a>
+                `;
+            }).join('');
+        }
+        
+        function navigateTo(pageId) {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+            const targetPage = document.getElementById(`page-${pageId}`);
+            if (targetPage) targetPage.classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('bg-white/5', 'border', 'border-white/10', 'text-white');
+                item.classList.add('text-slate-400');
+            });
+            
+            const activeNav = document.getElementById(`nav-${pageId}`);
+            if (activeNav) {
+                activeNav.classList.remove('text-slate-400');
+                activeNav.classList.add('bg-white/5', 'border', 'border-white/10', 'text-white');
+            }
+            
+            closeSidebar();
+        }
+
+        // ============================================
+        // AUTH
+        // ============================================
+        function showAuthScreen() {
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('authScreen').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+            
+            clerk.mountSignIn(document.getElementById('clerk-auth'), {
+                appearance: {
+                    elements: {
+                        rootBox: { width: '100%' },
+                        card: { boxShadow: 'none', border: 'none', background: 'transparent' },
+                        formButtonPrimary: { background: 'linear-gradient(135deg, #3b82f6, #2563eb)', borderRadius: '12px' }
+                    }
+                }
+            });
+            
+            clerk.addListener(({ user }) => {
+                if (user) handleSignedIn();
+            });
+        }
+        
+        function showMainApp() {
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+        }
+        
+        async function signOut() {
+            try {
+                await clerk.signOut();
+                currentUser = null;
+                dbUser = null;
+                userRole = 'student';
+                showAuthScreen();
+            } catch (error) {
+                console.error('Sign out error:', error);
+            }
+        }
+
+        // ============================================
+        // SIDEBAR
+        // ============================================
+        function openSidebar() {
+            document.getElementById('sidebar').classList.add('active');
+            document.getElementById('sidebarOverlay').classList.add('active');
+        }
+        
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('active');
+            document.getElementById('sidebarOverlay').classList.remove('active');
+        }
+        
+        function toggleUserMenu() {
+            document.getElementById('userMenuDropdown').classList.toggle('hidden');
+        }
+
+        // ============================================
+        // CALCULATOR
+        // ============================================
+        function updateHoursDisplay() {
+            const supHours = parseFloat(document.getElementById('calcSupHours').value) || 0;
+            const nightHours = parseFloat(document.getElementById('calcNightHours').value) || 0;
+            
+            document.getElementById('calcSupHoursDisplay').textContent = `${supHours} hrs`;
+            document.getElementById('calcNightHoursDisplay').textContent = `${nightHours} hrs`;
+        }
+        
+        function adjustProfHours(delta) {
+            const input = document.getElementById('calcProfHours');
+            let val = parseFloat(input.value) || 0;
+            val = Math.max(0, Math.min(10, val + delta));
+            input.value = val;
+            calculateHours();
+        }
+        
+        function toggleHptNumber() {
+            const checkbox = document.getElementById('calcHpt');
+            const container = document.getElementById('hptNumberContainer');
+            const toggle = document.getElementById('calcHptToggle').querySelector('div');
+            
+            if (checkbox.checked) {
+                container.classList.remove('hidden');
+                toggle.classList.add('scale-100');
+                toggle.classList.remove('scale-0');
+            } else {
+                container.classList.add('hidden');
+                toggle.classList.remove('scale-100');
+                toggle.classList.add('scale-0');
+                document.getElementById('calcHptNumber').value = '';
+                document.getElementById('hptError').classList.add('hidden');
+            }
+        }
+        
+        function validateHpt() {
+            const hptNumber = document.getElementById('calcHptNumber').value.trim();
+            const error = document.getElementById('hptError');
+            const input = document.getElementById('calcHptNumber');
+            
+            if (document.getElementById('calcHpt').checked && !hptNumber) {
+                error.classList.remove('hidden');
+                input.classList.add('error');
+                return false;
+            } else {
+                error.classList.add('hidden');
+                input.classList.remove('error');
+                calcState.hptNumber = hptNumber;
+                return true;
+            }
+        }
+        
+        function calculateAll() {
+            const dob = document.getElementById('calcDob').value;
+            const expiry = document.getElementById('calcExpiryDate').value;
+            
+            if (dob) {
+                calcState.dob = new Date(dob);
+                const age = calculateAge(calcState.dob);
+                document.getElementById('calcCurrentAge').textContent = `${age} years`;
+                
+                // Determine pathway
+                calcState.isUnder25 = age < 25;
+                calcState.hoursReq = calcState.isUnder25 ? 100 : 50;
+                calcState.nightReq = calcState.isUnder25 ? 10 : 5;
+                calcState.tenureMonths = calcState.isUnder25 ? 12 : 6;
+                
+                document.getElementById('calcNightReqLabel').textContent = calcState.nightReq;
+                
+                const pathwayBadge = document.getElementById('calcPathwayBadge');
+                const pathwayText = document.getElementById('calcPathwayText');
+                const pathwayIcon = document.getElementById('calcPathwayIcon');
+                
+                if (calcState.isUnder25) {
+                    pathwayBadge.className = 'col-span-2 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 backdrop-blur-md flex items-center justify-between group hover:bg-red-500/20 transition-colors';
+                    pathwayText.textContent = 'P1 Red';
+                    pathwayIcon.setAttribute('icon', 'solar:shield-warning-linear');
+                    pathwayIcon.className = 'text-red-400 text-xl';
+                } else {
+                    pathwayBadge.className = 'col-span-2 p-4 rounded-2xl bg-green-500/10 border border-green-500/20 backdrop-blur-md flex items-center justify-between group hover:bg-green-500/20 transition-colors';
+                    pathwayText.textContent = 'P2 Green';
+                    pathwayIcon.setAttribute('icon', 'solar:verified-check-linear');
+                    pathwayIcon.className = 'text-green-400 text-xl';
+                }
+            }
+            
+            if (expiry) {
+                const expiryDate = new Date(expiry);
+                calcState.issueDate = new Date(expiryDate);
+                calcState.issueDate.setFullYear(calcState.issueDate.getFullYear() - 5);
+            }
+            
+            // Update checkbox visuals
+            updateCheckboxVisual('calcCbta', 'calcCbtaToggle');
+            updateCheckboxVisual('calcReview', 'calcReviewToggle');
+            
+            calculateHours();
+        }
+        
+        function updateCheckboxVisual(checkboxId, toggleId) {
+            const checkbox = document.getElementById(checkboxId);
+            const toggle = document.getElementById(toggleId).querySelector('div');
+            if (checkbox.checked) {
+                toggle.classList.add('scale-100');
+                toggle.classList.remove('scale-0');
+            } else {
+                toggle.classList.remove('scale-100');
+                toggle.classList.add('scale-0');
+            }
+        }
+        
+        function calculateAge(birthDate) {
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+            return age;
+        }
+        
+        function calculateHours() {
+            const supHours = parseFloat(document.getElementById('calcSupHours').value) || 0;
+            const nightHours = parseFloat(document.getElementById('calcNightHours').value) || 0;
+            let profHours = parseFloat(document.getElementById('calcProfHours').value) || 0;
+            profHours = Math.min(10, profHours);
+            
+            const profCredit = profHours * 3;
+            document.getElementById('calcProfCredit').textContent = `+${profCredit} Hours Added`;
+            
+            // Credits
+            let credits = 0;
+            if (document.getElementById('calcSaferDriver').checked) credits += 20;
+            if (document.getElementById('calcVru').checked) credits += 10;
+            if (document.getElementById('calcFirstAid').checked) credits += 5;
+            
+            const totalHours = supHours + nightHours + profCredit + credits;
+            calcState.totalHours = totalHours;
+            
+            // Update displays
+            document.getElementById('gaugeTotalHours').textContent = totalHours.toFixed(1);
+            document.getElementById('statDayHours').textContent = (supHours + profCredit).toFixed(1);
+            document.getElementById('statNightHours').textContent = nightHours.toFixed(1);
+            
+            // Update gauge
+            const circumference = 553;
+            const progress = Math.min(1, totalHours / calcState.hoursReq);
+            const offset = circumference - (progress * circumference);
+            document.getElementById('gaugeCircle').style.strokeDashoffset = offset;
+            
+            // Determine eligibility
+            const hoursMet = totalHours >= calcState.hoursReq;
+            const nightMet = nightHours >= calcState.nightReq;
+            const hptChecked = document.getElementById('calcHpt').checked;
+            const hptValid = hptChecked && document.getElementById('calcHptNumber').value.trim();
+            const cbtaMet = document.getElementById('calcCbta').checked;
+            const reviewMet = document.getElementById('calcReview').checked;
+            
+            let tenureMet = false;
+            let tenureComplete = null;
+            if (calcState.issueDate) {
+                tenureComplete = new Date(calcState.issueDate);
+                tenureComplete.setMonth(tenureComplete.getMonth() + calcState.tenureMonths);
+                tenureMet = new Date() >= tenureComplete;
+            }
+            
+            const isEligible = hoursMet && nightMet && hptValid && cbtaMet && reviewMet && tenureMet;
+            
+            // Update status
+            const statusTitle = document.getElementById('statusTitle');
+            const statusBadge = document.getElementById('statusBadge');
+            const gaugeGlow = document.getElementById('gaugeGlow');
+            const gaugeCircle = document.getElementById('gaugeCircle');
+            const bookBtn = document.getElementById('bookDriveBtn');
+            
+            if (isEligible) {
+                statusTitle.textContent = 'Eligible!';
+                statusBadge.innerHTML = '<div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div><span class="text-xs text-green-300 font-semibold">Ready to book test</span>';
+                statusBadge.className = 'inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-500/10 border border-green-500/20';
+                gaugeGlow.className = 'absolute inset-0 bg-green-500/20 rounded-full blur-3xl transition-colors duration-500';
+                gaugeCircle.style.stroke = '#22c55e';
+                bookBtn.disabled = false;
+                bookBtn.className = 'w-full py-4 rounded-2xl bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold border border-green-400/30 cursor-pointer flex items-center justify-center gap-3 transition-all shadow-lg hover:shadow-green-500/20';
+                bookBtn.innerHTML = '<span>Book Driving Test</span><iconify-icon icon="solar:arrow-right-linear" class="text-lg"></iconify-icon>';
+            } else {
+                let missing = [];
+                if (!hoursMet) missing.push(`Need ${(calcState.hoursReq - totalHours).toFixed(1)} more hours`);
+                if (!nightMet) missing.push(`Need ${(calcState.nightReq - nightHours).toFixed(1)} night hours`);
+                if (!hptValid) missing.push('HPT required');
+                if (!cbtaMet) missing.push('CBT&A required');
+                if (!reviewMet) missing.push('1-22 required');
+                if (!tenureMet && calcState.issueDate) missing.push('Tenure not met');
+                
+                statusTitle.textContent = 'Not Eligible';
+                statusBadge.innerHTML = `<div class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div><span class="text-xs text-red-300 font-semibold">${missing[0] || 'Enter details above'}</span>`;
+                statusBadge.className = 'inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-500/10 border border-red-500/20';
+                gaugeGlow.className = 'absolute inset-0 bg-blue-500/20 rounded-full blur-3xl transition-colors duration-500';
+                gaugeCircle.style.stroke = '#3b82f6';
+                bookBtn.disabled = true;
+                bookBtn.className = 'w-full py-4 rounded-2xl bg-slate-800/40 backdrop-blur-md text-slate-500 font-bold border border-white/5 cursor-not-allowed flex items-center justify-center gap-3 transition-all';
+                bookBtn.innerHTML = '<span>Book Driving Test</span><iconify-icon icon="solar:lock-keyhole-minimalistic-linear" class="text-lg"></iconify-icon>';
+            }
+            
+            // Earliest date
+            if (calcState.dob && calcState.issueDate) {
+                const turn17 = new Date(calcState.dob);
+                turn17.setFullYear(turn17.getFullYear() + 17);
+                
+                const dates = [tenureComplete].filter(d => d);
+                if (calculateAge(calcState.dob) < 17) dates.push(turn17);
+                
+                if (dates.length > 0) {
+                    const earliest = new Date(Math.max(...dates.map(d => d.getTime())));
+                    document.getElementById('earliestDateDisplay').textContent = earliest.toLocaleDateString('en-AU', { year: 'numeric', month: 'short', day: 'numeric' });
+                    
+                    const today = new Date();
+                    if (today < earliest) {
+                        const days = Math.ceil((earliest - today) / (1000 * 60 * 60 * 24));
+                        document.getElementById('countdownDisplay').textContent = `${days} days remaining`;
+                    } else {
+                        document.getElementById('countdownDisplay').textContent = '';
+                    }
+                }
+            }
+        }
+        
+        function resetCalculator() {
+            document.getElementById('calcStudentName').value = '';
+            document.getElementById('calcDob').value = '';
+            document.getElementById('calcExpiryDate').value = '';
+            document.getElementById('calcLicenceNumber').value = '';
+            document.getElementById('calcSupHours').value = 0;
+            document.getElementById('calcNightHours').value = 0;
+            document.getElementById('calcProfHours').value = 0;
+            document.getElementById('calcSaferDriver').checked = false;
+            document.getElementById('calcVru').checked = false;
+            document.getElementById('calcFirstAid').checked = false;
+            document.getElementById('calcHpt').checked = false;
+            document.getElementById('calcHptNumber').value = '';
+            document.getElementById('calcCbta').checked = false;
+            document.getElementById('calcReview').checked = false;
+            
+            document.getElementById('hptNumberContainer').classList.add('hidden');
+            document.getElementById('calcCurrentAge').textContent = '--';
+            document.getElementById('calcPathwayText').textContent = '--';
+            
+            calcState = { isUnder25: true, hoursReq: 100, nightReq: 10, tenureMonths: 12, issueDate: null, dob: null, totalHours: 0, hptNumber: '' };
+            
+            updateHoursDisplay();
+            calculateHours();
+            showToast('Calculator reset', 'info');
+        }
+
+        // ============================================
+        // STUDENTS
+        // ============================================
+        async function loadStudents() {
+            try {
+                const { data, error } = await supabase
+                    .from('students')
+                    .select('*')
+                    .eq('is_archived', false)
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                students = data || [];
+                renderStudentTable();
+                updateStudentStats();
+            } catch (error) {
+                console.error('Error loading students:', error);
+            }
+        }
+        
+        function renderStudentTable() {
+            const tbody = document.getElementById('studentTableBody');
+            const emptyState = document.getElementById('studentsEmptyState');
+            
+            if (students.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            tbody.innerHTML = students.map(s => {
+                const statusClass = s.eligibility_status === 'ELIGIBLE' ? 'text-green-400 bg-green-500/10 border-green-500/20' :
+                    s.eligibility_status?.startsWith('PENDING') ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' :
+                    'text-red-400 bg-red-500/10 border-red-500/20';
+                
+                const statusLabel = s.eligibility_status === 'ELIGIBLE' ? 'Eligible' :
+                    s.eligibility_status === 'PENDING_HOURS' ? 'Need Hours' : 'Not Eligible';
+                
+                const progress = Math.min(100, ((s.total_hours || 0) / (s.hours_required || 100)) * 100);
+                
+                return `
+                    <tr class="group cursor-pointer">
+                        <td>
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center text-white text-sm font-bold">
+                                    ${(s.first_name?.[0] || '') + (s.last_name?.[0] || '')}
+                                </div>
+                                <div>
+                                    <div class="font-semibold text-white group-hover:text-blue-300 transition-colors">${s.first_name} ${s.last_name}</div>
+                                    <div class="text-xs text-slate-500">${s.email || 'No email'}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="font-mono text-slate-300">${s.licence_number || '--'}</td>
+                        <td>
+                            <div class="flex items-center gap-3">
+                                <div class="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden max-w-[100px]">
+                                    <div class="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full" style="width: ${progress}%"></div>
+                                </div>
+                                <span class="text-sm font-mono text-slate-400">${s.total_hours || 0}/${s.hours_required || 100}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${statusClass}">
+                                <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                                ${statusLabel}
+                            </span>
+                        </td>
+                        <td class="text-slate-400 text-sm">${s.earliest_eligible_date ? new Date(s.earliest_eligible_date).toLocaleDateString('en-AU') : '--'}</td>
+                        <td>
+                            <button class="p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-colors">
+                                <iconify-icon icon="solar:menu-dots-bold" width="18"></iconify-icon>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function updateStudentStats() {
+            document.getElementById('statTotalStudents').textContent = students.length;
+            document.getElementById('statEligibleStudents').textContent = students.filter(s => s.eligibility_status === 'ELIGIBLE').length;
+            document.getElementById('statPendingStudents').textContent = students.filter(s => s.eligibility_status?.startsWith('PENDING')).length;
+            
+            const thisMonth = new Date();
+            thisMonth.setDate(1);
+            document.getElementById('statNewStudents').textContent = students.filter(s => new Date(s.created_at) >= thisMonth).length;
+        }
+        
+        function filterStudents() {
+            const search = document.getElementById('studentSearch').value.toLowerCase();
+            // Simple filter for demo
+            renderStudentTable();
+        }
+        
+        function showAddStudent() {
+            showToast('Add student feature coming soon', 'info');
+        }
+
+        // ============================================
+        // ADMIN: USERS
+        // ============================================
+        async function loadUsers() {
+            try {
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                users = data || [];
+                renderUsersTable();
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+        
+        function renderUsersTable() {
+            const tbody = document.getElementById('usersTableBody');
+            
+            tbody.innerHTML = users.map(u => {
+                const roleColors = {
+                    student: 'text-green-400 bg-green-500/10 border-green-500/20',
+                    instructor: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+                    admin: 'text-red-400 bg-red-500/10 border-red-500/20'
+                };
+                const roleLabels = { student: 'Student', instructor: 'ADI', admin: 'Admin' };
+                
+                return `
+                    <tr>
+                        <td>
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center text-white text-sm font-bold">
+                                    ${(u.instructor_name || 'U').substring(0, 2).toUpperCase()}
+                                </div>
+                                <div>
+                                    <div class="font-semibold text-white">${u.instructor_name || 'Unknown'}</div>
+                                    <div class="text-xs text-slate-500">${u.email}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${roleColors[u.role] || ''}">${roleLabels[u.role] || u.role}</span>
+                        </td>
+                        <td>
+                            <span class="${u.is_active !== false ? 'text-green-400' : 'text-red-400'}">${u.is_active !== false ? 'Active' : 'Disabled'}</span>
+                        </td>
+                        <td>
+                            <span class="${u.mfa_enabled ? 'text-green-400' : 'text-amber-400'}">${u.mfa_enabled ? 'Enabled' : 'Not Set'}</span>
+                        </td>
+                        <td class="text-slate-400 text-sm">${u.last_login_at ? new Date(u.last_login_at).toLocaleDateString('en-AU') : 'Never'}</td>
+                        <td>
+                            <button class="p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-colors">
+                                <iconify-icon icon="solar:menu-dots-bold" width="18"></iconify-icon>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ============================================
+        // ADMIN: AUDIT LOG
+        // ============================================
+        async function loadAuditLog() {
+            try {
+                const { data, error } = await supabase
+                    .from('audit_log')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(100);
+                
+                if (error) throw error;
+                auditLogs = data || [];
+                renderAuditLog();
+            } catch (error) {
+                console.error('Error loading audit log:', error);
+            }
+        }
+        
+        function renderAuditLog() {
+            const tbody = document.getElementById('auditTableBody');
+            
+            tbody.innerHTML = auditLogs.map(log => `
+                <tr>
+                    <td class="text-slate-400 text-sm font-mono">${new Date(log.created_at).toLocaleString('en-AU')}</td>
+                    <td class="text-slate-300">${log.user_email || '--'}</td>
+                    <td>
+                        <span class="px-2 py-1 rounded-lg text-xs font-semibold ${
+                            log.action === 'LOGIN' ? 'bg-blue-500/10 text-blue-400' :
+                            log.action === 'CREATE' ? 'bg-green-500/10 text-green-400' :
+                            log.action === 'UPDATE' ? 'bg-amber-500/10 text-amber-400' :
+                            log.action === 'DELETE' ? 'bg-red-500/10 text-red-400' : 'bg-slate-500/10 text-slate-400'
+                        }">${log.action}</span>
+                    </td>
+                    <td class="text-slate-400 text-sm">${log.table_name || ''} ${log.student_name ? `- ${log.student_name}` : ''}</td>
+                    <td class="text-slate-500 text-xs font-mono">${log.ip_address || '--'}</td>
+                </tr>
+            `).join('');
+        }
+
+        // ============================================
+        // TOAST
+        // ============================================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <iconify-icon icon="${type === 'success' ? 'solar:check-circle-linear' : type === 'error' ? 'solar:close-circle-linear' : 'solar:info-circle-linear'}" width="20"></iconify-icon>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ============================================
+        // INIT
+        // ============================================
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
