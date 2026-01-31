@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service - APEX Driving School</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Manrope', sans-serif; 
+            background-color: #020617;
+            color: #e2e8f0;
+        }
+        .bg-noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="bg-noise"></div>
+    
+    <!-- Background blobs -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div class="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px]"></div>
+        <div class="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-indigo-600/15 rounded-full blur-[130px]"></div>
+    </div>
+    
+    <div class="relative z-10 max-w-4xl mx-auto px-6 py-16">
+        <!-- Header -->
+        <div class="text-center mb-16">
+            <a href="app.html" class="inline-flex items-center gap-3 mb-8 text-slate-400 hover:text-white transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back to App
+            </a>
+            <h1 class="text-4xl font-bold text-white mb-4">Terms of Service</h1>
+            <p class="text-slate-400">Last updated: January 26, 2026</p>
+        </div>
+
+        <!-- Content -->
+        <div class="glass-panel rounded-3xl p-8 md:p-12 space-y-12">
+            
+            <!-- Introduction -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">1. Agreement to Terms</h2>
+                <p class="text-slate-300 leading-relaxed">
+                    By accessing or using the APEX P1 Eligibility System ("the App"), you agree to be bound by these 
+                    Terms of Service ("Terms"). If you do not agree to these Terms, please do not use the App.
+                </p>
+                <p class="text-slate-300 leading-relaxed mt-4">
+                    The App is operated by APEX Driving School ("we", "us", "our"), an ACT-based driving school 
+                    providing driver education and training services.
+                </p>
+            </section>
+
+            <!-- Eligibility -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">2. Eligibility</h2>
+                <p class="text-slate-300 leading-relaxed">To use the App, you must:</p>
+                <ul class="text-slate-300 space-y-2 list-disc list-inside mt-4">
+                    <li>Be at least 16 years of age (or have parental/guardian consent if under 18)</li>
+                    <li>Be an authorised user (student, driving instructor, or administrator)</li>
+                    <li>Have a valid ACT learner licence (for students using the calculator)</li>
+                    <li>Provide accurate and truthful information</li>
+                </ul>
+            </section>
+
+            <!-- User Accounts -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">3. User Accounts</h2>
+                
+                <div class="space-y-4">
+                    <div class="p-4 rounded-xl bg-white/5 border border-white/5">
+                        <h3 class="font-semibold text-white mb-2">3.1 Account Creation</h3>
+                        <p class="text-slate-400 text-sm">
+                            You must create an account to use the App. You are responsible for maintaining the 
+                            confidentiality of your account credentials and for all activities under your account.
+                        </p>
+                    </div>
+                    
+                    <div class="p-4 rounded-xl bg-white/5 border border-white/5">
+                        <h3 class="font-semibold text-white mb-2">3.2 Multi-Factor Authentication</h3>
+                        <p class="text-slate-400 text-sm">
+                            Multi-factor authentication (MFA) is required for all users. This is a security 
+                            requirement to protect student data and cannot be disabled.
+                        </p>
+                    </div>
+                    
+                    <div class="p-4 rounded-xl bg-white/5 border border-white/5">
+                        <h3 class="font-semibold text-white mb-2">3.3 Account Termination</h3>
+                        <p class="text-slate-400 text-sm">
+                            We may suspend or terminate your account if you violate these Terms or engage in 
+                            fraudulent, harmful, or illegal activities.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- User Roles -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">4. User Roles</h2>
+                <p class="text-slate-300 leading-relaxed mb-4">The App has three user roles with different permissions:</p>
+                
+                <div class="space-y-4">
+                    <div class="p-4 rounded-xl bg-green-500/10 border border-green-500/20">
+                        <h3 class="font-semibold text-green-300 mb-2">Student</h3>
+                        <p class="text-slate-400 text-sm">
+                            Can use the P1 Eligibility Calculator to track their driving hours and eligibility status. 
+                            Students can only view their own information.
+                        </p>
+                    </div>
+                    
+                    <div class="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                        <h3 class="font-semibold text-blue-300 mb-2">ADI (Authorised Driving Instructor)</h3>
+                        <p class="text-slate-400 text-sm">
+                            Can access the full app features including student management, CBT&A scanning, 
+                            booking system, and reports. ADIs can only view their own students.
+                        </p>
+                    </div>
+                    
+                    <div class="p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+                        <h3 class="font-semibold text-red-300 mb-2">Admin</h3>
+                        <p class="text-slate-400 text-sm">
+                            Has full access including user management, security settings, and audit logs. 
+                            Admins can view all students and users across the system.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Acceptable Use -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">5. Acceptable Use</h2>
+                <p class="text-slate-300 leading-relaxed mb-4">You agree not to:</p>
+                <ul class="text-slate-300 space-y-2 list-disc list-inside">
+                    <li>Provide false or misleading information about driving hours or assessments</li>
+                    <li>Access or attempt to access data belonging to other users</li>
+                    <li>Share your account credentials with others</li>
+                    <li>Use the App for any unlawful purpose</li>
+                    <li>Attempt to reverse engineer, hack, or compromise the App's security</li>
+                    <li>Upload malicious content, viruses, or harmful code</li>
+                    <li>Use automated tools to scrape or extract data from the App</li>
+                    <li>Impersonate another user or misrepresent your identity</li>
+                </ul>
+            </section>
+
+            <!-- Calculator Disclaimer -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">6. Calculator Disclaimer</h2>
+                <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                    <p class="text-amber-200 font-semibold mb-2">⚠️ Important Notice</p>
+                    <p class="text-slate-300 text-sm">
+                        The P1 Eligibility Calculator is provided as a guide only. While we strive for accuracy, 
+                        the calculator's results do not guarantee eligibility for a provisional licence. 
+                        Final eligibility is determined by Access Canberra at the time of your practical 
+                        driving assessment. Always verify your hours in your official logbook.
+                    </p>
+                </div>
+                <p class="text-slate-300 leading-relaxed mt-4">
+                    We are not responsible for any consequences arising from incorrect eligibility calculations 
+                    or decisions made based on the calculator's output.
+                </p>
+            </section>
+
+            <!-- Data Accuracy -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">7. Data Accuracy</h2>
+                <p class="text-slate-300 leading-relaxed">
+                    You are responsible for the accuracy of the information you enter into the App. 
+                    This includes:
+                </p>
+                <ul class="text-slate-300 space-y-2 list-disc list-inside mt-4">
+                    <li>Student personal information (name, date of birth, licence details)</li>
+                    <li>Driving hours (supervised, night, professional)</li>
+                    <li>Course completions and assessment dates</li>
+                    <li>Contact details and addresses</li>
+                </ul>
+                <p class="text-slate-300 leading-relaxed mt-4">
+                    Entering false information may result in account termination and could have legal consequences.
+                </p>
+            </section>
+
+            <!-- Intellectual Property -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">8. Intellectual Property</h2>
+                <p class="text-slate-300 leading-relaxed">
+                    The App, including its design, code, features, and content, is owned by APEX Driving School 
+                    and protected by copyright and other intellectual property laws. You may not:
+                </p>
+                <ul class="text-slate-300 space-y-2 list-disc list-inside mt-4">
+                    <li>Copy, modify, or distribute the App's code or design</li>
+                    <li>Use our trademarks or branding without permission</li>
+                    <li>Create derivative works based on the App</li>
+                </ul>
+            </section>
+
+            <!-- Service Availability -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">9. Service Availability</h2>
+                <p class="text-slate-300 leading-relaxed">
+                    We strive to keep the App available 24/7, but we do not guarantee uninterrupted access. 
+                    The App may be unavailable due to:
+                </p>
+                <ul class="text-slate-300 space-y-2 list-disc list-inside mt-4">
+                    <li>Scheduled maintenance (we will try to provide advance notice)</li>
+                    <li>Technical issues or server outages</li>
+                    <li>Security incidents requiring immediate action</li>
+                    <li>Circumstances beyond our control</li>
+                </ul>
+            </section>
+
+            <!-- Limitation of Liability -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">10. Limitation of Liability</h2>
+                <p class="text-slate-300 leading-relaxed">
+                    To the maximum extent permitted by law, APEX Driving School shall not be liable for:
+                </p>
+                <ul class="text-slate-300 space-y-2 list-disc list-inside mt-4">
+                    <li>Any indirect, incidental, special, or consequential damages</li>
+                    <li>Loss of data, revenue, or business opportunities</li>
+                    <li>Decisions made based on the App's calculator or features</li>
+                    <li>Delays or failures in obtaining a provisional licence</li>
+                    <li>Third-party services integrated with the App (Clerk, Supabase)</li>
+                </ul>
+                <p class="text-slate-300 leading-relaxed mt-4">
+                    Our total liability shall not exceed the amount you have paid to use the App (if any).
+                </p>
+            </section>
+
+            <!-- Indemnification -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">11. Indemnification</h2>
+                <p class="text-slate-300 leading-relaxed">
+                    You agree to indemnify and hold harmless APEX Driving School, its employees, and agents from 
+                    any claims, damages, or expenses arising from:
+                </p>
+                <ul class="text-slate-300 space-y-2 list-disc list-inside mt-4">
+                    <li>Your use of the App</li>
+                    <li>Your violation of these Terms</li>
+                    <li>Your violation of any applicable laws</li>
+                    <li>Any content you submit to the App</li>
+                </ul>
+            </section>
+
+            <!-- Changes to Terms -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">12. Changes to Terms</h2>
+                <p class="text-slate-300 leading-relaxed">
+                    We may update these Terms from time to time. We will notify you of material changes by:
+                </p>
+                <ul class="text-slate-300 space-y-2 list-disc list-inside mt-4">
+                    <li>Displaying a notice in the App</li>
+                    <li>Sending an email to your registered email address</li>
+                    <li>Updating the "Last updated" date at the top of these Terms</li>
+                </ul>
+                <p class="text-slate-300 leading-relaxed mt-4">
+                    Continued use of the App after changes constitutes acceptance of the updated Terms.
+                </p>
+            </section>
+
+            <!-- Governing Law -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">13. Governing Law</h2>
+                <p class="text-slate-300 leading-relaxed">
+                    These Terms are governed by the laws of the Australian Capital Territory, Australia. 
+                    Any disputes arising from these Terms or your use of the App shall be resolved in the 
+                    courts of the ACT.
+                </p>
+            </section>
+
+            <!-- Contact -->
+            <section>
+                <h2 class="text-2xl font-bold text-white mb-4">14. Contact Us</h2>
+                <p class="text-slate-300 leading-relaxed mb-4">
+                    If you have any questions about these Terms, please contact us:
+                </p>
+                <div class="p-6 rounded-xl bg-white/5 border border-white/5">
+                    <p class="text-white font-semibold">APEX Driving School</p>
+                    <p class="text-slate-400 mt-2">Email: legal@apexdriving.com.au</p>
+                    <p class="text-slate-400">Phone: (02) XXXX XXXX</p>
+                    <p class="text-slate-400">Address: [Business Address], ACT, Australia</p>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-12 text-slate-500 text-sm">
+            <p>© 2026 APEX Driving School. All rights reserved.</p>
+            <p class="mt-2">ABN: XX XXX XXX XXX</p>
+        </div>
+    </div>
+</body>
+</html>
