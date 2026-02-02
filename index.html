@@ -1631,47 +1631,52 @@
         }
         
         async function switchRole(newRole) {
-            // Update role in database
+            // Prevent multiple clicks
+            if (window.switchingRole) return;
+            window.switchingRole = true;
+            
             try {
+                // Update role in database
                 const { error } = await supabaseClient
                     .from('users')
                     .update({ role: newRole })
                     .eq('clerk_user_id', currentUser.id);
                 
-                if (!error) {
-                    userRole = newRole;
-                    dbUser.role = newRole;
-                    
-                    // Update UI
-                    updateUserDisplay();
-                    buildNavigation();
-                    
-                    // Close dropdown
-                    document.getElementById('roleSwitcherDropdown').classList.add('hidden');
-                    
-                    // Load appropriate data and navigate
-                    if (newRole === 'admin') {
-                        await loadADIs();
-                        await loadStudents();
-                        await loadUsers();
-                        await loadAuditLog();
-                        navigateTo('dashboard');
-                    } else if (newRole === 'instructor') {
-                        await loadMyStudents();
-                        navigateTo('my-students');
-                    } else {
-                        await loadMyProgress();
-                        navigateTo('my-progress');
-                    }
-                    
-                    showToast(`Switched to ${newRole} role`, 'success');
-                } else {
+                if (error) {
                     showToast('Error switching role: ' + error.message, 'error');
+                    window.switchingRole = false;
+                    return;
                 }
+                
+                // Update local state
+                userRole = newRole;
+                if (dbUser) dbUser.role = newRole;
+                
+                // Close dropdown
+                document.getElementById('roleSwitcherDropdown').classList.add('hidden');
+                
+                // Update UI
+                const roleBadge = document.getElementById('sidebarRoleBadge');
+                const roleLabels = { student: 'Student', instructor: 'Instructor', admin: 'Admin' };
+                const roleColors = { student: 'text-green-400', instructor: 'text-blue-400', admin: 'text-red-400' };
+                roleBadge.innerHTML = `${roleLabels[newRole] || 'User'} ▾`;
+                roleBadge.className = `text-[10px] font-semibold tracking-[0.2em] uppercase opacity-80 hover:opacity-100 cursor-pointer ${roleColors[newRole] || ''}`;
+                
+                // Rebuild navigation
+                buildNavigation();
+                
+                // Navigate to default page for role
+                const defaultPages = { admin: 'dashboard', instructor: 'my-students', student: 'my-progress' };
+                navigateTo(defaultPages[newRole] || 'calculator');
+                
+                showToast(`Switched to ${roleLabels[newRole]} role`, 'success');
+                
             } catch (e) {
                 console.error('Error switching role:', e);
                 showToast('Error switching role', 'error');
             }
+            
+            window.switchingRole = false;
         }
         
         function buildNavigation() {
