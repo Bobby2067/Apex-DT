@@ -366,10 +366,27 @@
                     </div>
                     <div>
                         <h1 class="font-bold text-2xl text-white leading-none tracking-tight">APEX</h1>
-                        <span id="sidebarRoleBadge" class="text-[10px] font-semibold tracking-[0.2em] uppercase opacity-80 text-green-400">Student</span>
+                        <button onclick="toggleRoleSwitcher()" id="sidebarRoleBadge" class="text-[10px] font-semibold tracking-[0.2em] uppercase opacity-80 text-green-400 hover:opacity-100 cursor-pointer">Student ▾</button>
                     </div>
                     <button class="lg:hidden ml-auto text-slate-400 hover:text-white" onclick="closeSidebar()">
                         <iconify-icon icon="solar:close-circle-linear" width="24"></iconify-icon>
+                    </button>
+                </div>
+                
+                <!-- Role Switcher Dropdown -->
+                <div id="roleSwitcherDropdown" class="hidden mx-4 mb-4 glass-panel rounded-xl overflow-hidden">
+                    <div class="p-2 text-xs text-slate-500 uppercase tracking-wider border-b border-white/10">Switch Role</div>
+                    <button onclick="switchRole('admin')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors">
+                        <iconify-icon icon="solar:shield-user-linear" width="18"></iconify-icon>
+                        Admin
+                    </button>
+                    <button onclick="switchRole('instructor')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-blue-400 hover:bg-blue-500/10 transition-colors">
+                        <iconify-icon icon="solar:steering-wheel-linear" width="18"></iconify-icon>
+                        Instructor (ADI)
+                    </button>
+                    <button onclick="switchRole('student')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-green-400 hover:bg-green-500/10 transition-colors">
+                        <iconify-icon icon="solar:user-linear" width="18"></iconify-icon>
+                        Student
                     </button>
                 </div>
 
@@ -1604,8 +1621,58 @@
             const roleBadge = document.getElementById('sidebarRoleBadge');
             const roleLabels = { student: 'Student', instructor: 'Instructor', admin: 'Admin' };
             const roleColors = { student: 'text-green-400', instructor: 'text-blue-400', admin: 'text-red-400' };
-            roleBadge.textContent = roleLabels[userRole] || 'User';
-            roleBadge.className = `text-[10px] font-semibold tracking-[0.2em] uppercase opacity-80 ${roleColors[userRole] || ''}`;
+            roleBadge.innerHTML = `${roleLabels[userRole] || 'User'} ▾`;
+            roleBadge.className = `text-[10px] font-semibold tracking-[0.2em] uppercase opacity-80 hover:opacity-100 cursor-pointer ${roleColors[userRole] || ''}`;
+        }
+        
+        function toggleRoleSwitcher() {
+            const dropdown = document.getElementById('roleSwitcherDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+        
+        async function switchRole(newRole) {
+            // Update role in database
+            try {
+                const { error } = await supabaseClient
+                    .from('users')
+                    .update({ role: newRole })
+                    .eq('clerk_user_id', currentUser.id);
+                
+                if (!error) {
+                    userRole = newRole;
+                    dbUser.role = newRole;
+                    
+                    // Update UI
+                    updateUserDisplay();
+                    buildNavigation();
+                    
+                    // Close dropdown
+                    document.getElementById('roleSwitcherDropdown').classList.add('hidden');
+                    
+                    // Load appropriate data and navigate
+                    if (newRole === 'admin') {
+                        await loadADIs();
+                        await loadStudents();
+                        await loadUsers();
+                        await loadAuditLog();
+                        navigateTo('dashboard');
+                    } else if (newRole === 'instructor') {
+                        await loadMyStudents();
+                        navigateTo('my-students');
+                    } else {
+                        await loadMyProgress();
+                        navigateTo('my-progress');
+                    }
+                    
+                    showToast(`Switched to ${newRole} role`, 'success');
+                } else {
+                    showToast('Error switching role: ' + error.message, 'error');
+                }
+            } catch (e) {
+                console.error('Error switching role:', e);
+                showToast('Error switching role', 'error');
+            }
+        }
         }
         
         function buildNavigation() {
