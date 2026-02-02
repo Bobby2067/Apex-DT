@@ -284,6 +284,68 @@
         </div>
     </div>
 
+    <!-- ==================== ROLE SELECTION SCREEN ==================== -->
+    <div id="roleSelectScreen" class="hidden min-h-screen flex items-center justify-center p-6 relative z-10">
+        <div class="w-full max-w-3xl">
+            <div class="glass-panel rounded-3xl p-8">
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4">A</div>
+                    <h1 class="text-3xl font-bold text-white mb-2">Welcome to APEX</h1>
+                    <p class="text-slate-400">How would you like to sign in?</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <!-- Admin -->
+                    <button onclick="selectRole('admin')" class="role-card p-6 rounded-2xl bg-gradient-to-br from-red-600/20 to-red-700/10 border border-red-500/30 hover:border-red-400/50 hover:scale-105 transition-all group">
+                        <div class="p-4 rounded-2xl bg-red-500/20 text-red-400 w-fit mx-auto mb-4 group-hover:scale-110 transition-transform">
+                            <iconify-icon icon="solar:shield-user-bold" width="32"></iconify-icon>
+                        </div>
+                        <div class="text-center">
+                            <div class="font-bold text-white text-lg">Admin</div>
+                            <div class="text-xs text-slate-400 mt-2">Manage instructors, students & system</div>
+                        </div>
+                    </button>
+                    
+                    <!-- ADI -->
+                    <button onclick="selectRole('instructor')" class="role-card p-6 rounded-2xl bg-gradient-to-br from-blue-600/20 to-blue-700/10 border border-blue-500/30 hover:border-blue-400/50 hover:scale-105 transition-all group">
+                        <div class="p-4 rounded-2xl bg-blue-500/20 text-blue-400 w-fit mx-auto mb-4 group-hover:scale-110 transition-transform">
+                            <iconify-icon icon="solar:steering-wheel-bold" width="32"></iconify-icon>
+                        </div>
+                        <div class="text-center">
+                            <div class="font-bold text-white text-lg">Instructor (ADI)</div>
+                            <div class="text-xs text-slate-400 mt-2">Manage your students & lessons</div>
+                        </div>
+                    </button>
+                    
+                    <!-- Student -->
+                    <button onclick="selectRole('student')" class="role-card p-6 rounded-2xl bg-gradient-to-br from-green-600/20 to-green-700/10 border border-green-500/30 hover:border-green-400/50 hover:scale-105 transition-all group">
+                        <div class="p-4 rounded-2xl bg-green-500/20 text-green-400 w-fit mx-auto mb-4 group-hover:scale-110 transition-transform">
+                            <iconify-icon icon="solar:user-bold" width="32"></iconify-icon>
+                        </div>
+                        <div class="text-center">
+                            <div class="font-bold text-white text-lg">Student</div>
+                            <div class="text-xs text-slate-400 mt-2">Track progress & update hours</div>
+                        </div>
+                    </button>
+                </div>
+                
+                <!-- Self-registration with key -->
+                <div class="border-t border-white/10 pt-6">
+                    <div class="text-center text-sm text-slate-400 mb-4">Have an APEX registration key?</div>
+                    <div class="flex gap-3 max-w-md mx-auto">
+                        <input type="text" id="apexRegKey" placeholder="Enter registration key" class="flex-1 glass-input text-white px-4 py-3 rounded-xl uppercase tracking-wider text-center font-mono">
+                        <button onclick="validateRegKey()" class="px-6 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold transition-all flex items-center gap-2">
+                            <iconify-icon icon="solar:key-linear" width="20"></iconify-icon>
+                            Verify
+                        </button>
+                    </div>
+                    <p id="regKeyError" class="hidden text-red-400 text-xs mt-2 text-center"></p>
+                    <p id="regKeySuccess" class="hidden text-green-400 text-xs mt-2 text-center"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ==================== MAIN APP ==================== -->
     <div id="mainApp" class="hidden">
         <div class="flex min-h-screen relative z-10">
@@ -882,6 +944,273 @@
                         </div>
                     </div>
 
+                    <!-- ==================== ADMIN DASHBOARD ==================== -->
+                    <div id="page-dashboard" class="page-content hidden">
+                        <header class="mb-10">
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-2 text-xs font-semibold text-red-400 uppercase tracking-widest opacity-80">
+                                    <span class="w-2 h-2 rounded-full bg-red-400 animate-pulse"></span>
+                                    Admin
+                                </div>
+                                <h2 class="text-3xl lg:text-4xl font-bold text-white tracking-tight">Dashboard</h2>
+                            </div>
+                        </header>
+
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                            <div class="glass-panel p-6 rounded-2xl">
+                                <div class="flex items-center gap-4">
+                                    <div class="p-3 rounded-xl bg-blue-500/20 text-blue-400">
+                                        <iconify-icon icon="solar:steering-wheel-linear" width="24"></iconify-icon>
+                                    </div>
+                                    <div>
+                                        <div class="text-2xl font-bold text-white" id="dashAdiCount">0</div>
+                                        <div class="text-sm text-slate-400">Instructors</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="glass-panel p-6 rounded-2xl">
+                                <div class="flex items-center gap-4">
+                                    <div class="p-3 rounded-xl bg-green-500/20 text-green-400">
+                                        <iconify-icon icon="solar:users-group-rounded-linear" width="24"></iconify-icon>
+                                    </div>
+                                    <div>
+                                        <div class="text-2xl font-bold text-white" id="dashStudentCount">0</div>
+                                        <div class="text-sm text-slate-400">Students</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="glass-panel p-6 rounded-2xl">
+                                <div class="flex items-center gap-4">
+                                    <div class="p-3 rounded-xl bg-amber-500/20 text-amber-400">
+                                        <iconify-icon icon="solar:check-circle-linear" width="24"></iconify-icon>
+                                    </div>
+                                    <div>
+                                        <div class="text-2xl font-bold text-white" id="dashEligibleCount">0</div>
+                                        <div class="text-sm text-slate-400">Test Ready</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="glass-panel p-6 rounded-2xl">
+                                <div class="flex items-center gap-4">
+                                    <div class="p-3 rounded-xl bg-purple-500/20 text-purple-400">
+                                        <iconify-icon icon="solar:calendar-linear" width="24"></iconify-icon>
+                                    </div>
+                                    <div>
+                                        <div class="text-2xl font-bold text-white" id="dashThisMonth">0</div>
+                                        <div class="text-sm text-slate-400">This Month</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ==================== ADI MANAGEMENT (Admin) ==================== -->
+                    <div id="page-adis" class="page-content hidden">
+                        <header class="mb-10">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div class="space-y-2">
+                                    <div class="flex items-center gap-2 text-xs font-semibold text-red-400 uppercase tracking-widest opacity-80">
+                                        <span class="w-2 h-2 rounded-full bg-red-400 animate-pulse"></span>
+                                        Admin
+                                    </div>
+                                    <h2 class="text-3xl lg:text-4xl font-bold text-white tracking-tight">Instructors (ADIs)</h2>
+                                </div>
+                                <button onclick="openAddADIModal()" class="flex items-center gap-2 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-all">
+                                    <iconify-icon icon="solar:user-plus-linear" width="20"></iconify-icon>
+                                    Add ADI
+                                </button>
+                            </div>
+                        </header>
+
+                        <div class="glass-panel rounded-3xl overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr class="bg-black/20">
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>ADI Number</th>
+                                            <th>Students</th>
+                                            <th>Status</th>
+                                            <th class="text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adiTableBody"></tbody>
+                                </table>
+                            </div>
+                            <div id="adisEmptyState" class="hidden p-12 text-center">
+                                <iconify-icon icon="solar:steering-wheel-linear" width="48" class="text-slate-600 mb-4"></iconify-icon>
+                                <p class="text-slate-400">No instructors yet. Add your first ADI to get started.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ==================== REGISTRATION KEYS (Admin) ==================== -->
+                    <div id="page-reg-keys" class="page-content hidden">
+                        <header class="mb-10">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div class="space-y-2">
+                                    <div class="flex items-center gap-2 text-xs font-semibold text-red-400 uppercase tracking-widest opacity-80">
+                                        <span class="w-2 h-2 rounded-full bg-red-400 animate-pulse"></span>
+                                        Admin
+                                    </div>
+                                    <h2 class="text-3xl lg:text-4xl font-bold text-white tracking-tight">Registration Keys</h2>
+                                    <p class="text-slate-400">Generate keys for self-registration</p>
+                                </div>
+                                <div class="flex gap-3">
+                                    <button onclick="generateAndShowKey('instructor')" class="flex items-center gap-2 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-all">
+                                        <iconify-icon icon="solar:key-linear" width="20"></iconify-icon>
+                                        Generate ADI Key
+                                    </button>
+                                    <button onclick="generateAndShowKey('student')" class="flex items-center gap-2 px-5 py-3 rounded-xl bg-green-600 hover:bg-green-500 text-white font-semibold transition-all">
+                                        <iconify-icon icon="solar:key-linear" width="20"></iconify-icon>
+                                        Generate Student Key
+                                    </button>
+                                </div>
+                            </div>
+                        </header>
+
+                        <div id="generatedKeyDisplay" class="hidden mb-8 glass-panel p-6 rounded-2xl border-2 border-amber-500/50">
+                            <div class="text-center">
+                                <div class="text-sm text-amber-400 mb-2">Generated Key</div>
+                                <div class="text-3xl font-mono font-bold text-white tracking-widest" id="generatedKeyValue">APEX-ADI-XXXXX</div>
+                                <button onclick="copyGeneratedKey()" class="mt-4 px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-semibold transition-all">
+                                    Copy to Clipboard
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel rounded-3xl overflow-hidden" id="regKeysContainer">
+                            <div class="p-12 text-center text-slate-400">
+                                <iconify-icon icon="solar:key-linear" width="48" class="text-slate-600 mb-4"></iconify-icon>
+                                <p>Generate registration keys above to allow self-registration.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ==================== MY STUDENTS (Instructor) ==================== -->
+                    <div id="page-my-students" class="page-content hidden">
+                        <header class="mb-10">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div class="space-y-2">
+                                    <div class="flex items-center gap-2 text-xs font-semibold text-blue-400 uppercase tracking-widest opacity-80">
+                                        <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+                                        Instructor
+                                    </div>
+                                    <h2 class="text-3xl lg:text-4xl font-bold text-white tracking-tight">My Students</h2>
+                                </div>
+                                <button onclick="openAddStudentModal()" class="flex items-center gap-2 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-all">
+                                    <iconify-icon icon="solar:user-plus-linear" width="20"></iconify-icon>
+                                    Add Student
+                                </button>
+                            </div>
+                        </header>
+
+                        <div class="glass-panel rounded-3xl overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr class="bg-black/20">
+                                            <th>Name</th>
+                                            <th>Licence</th>
+                                            <th>Hours</th>
+                                            <th>Status</th>
+                                            <th>Eligible Date</th>
+                                            <th class="text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="myStudentTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ==================== LESSON LOG (Instructor) ==================== -->
+                    <div id="page-lessons" class="page-content hidden">
+                        <header class="mb-10">
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-2 text-xs font-semibold text-blue-400 uppercase tracking-widest opacity-80">
+                                    <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+                                    Instructor
+                                </div>
+                                <h2 class="text-3xl lg:text-4xl font-bold text-white tracking-tight">Lesson Log</h2>
+                            </div>
+                        </header>
+
+                        <div class="glass-panel rounded-3xl p-8 text-center">
+                            <iconify-icon icon="solar:clipboard-check-linear" width="48" class="text-slate-600 mb-4"></iconify-icon>
+                            <p class="text-slate-400 mb-4">Log lessons and track competencies for your students.</p>
+                            <button class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-all">
+                                Coming Soon
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ==================== MY PROGRESS (Student) ==================== -->
+                    <div id="page-my-progress" class="page-content hidden">
+                        <header class="mb-10">
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-2 text-xs font-semibold text-green-400 uppercase tracking-widest opacity-80">
+                                    <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                                    Student
+                                </div>
+                                <h2 class="text-3xl lg:text-4xl font-bold text-white tracking-tight">My Progress</h2>
+                            </div>
+                        </header>
+
+                        <div id="myProgressContent">
+                            <div class="glass-panel rounded-3xl p-8 text-center">
+                                <iconify-icon icon="solar:chart-linear" width="48" class="text-slate-600 mb-4"></iconify-icon>
+                                <p class="text-slate-400">Your progress will appear here once your instructor links your account.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ==================== UPDATE HOURS (Student) ==================== -->
+                    <div id="page-my-hours" class="page-content hidden">
+                        <header class="mb-10">
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-2 text-xs font-semibold text-green-400 uppercase tracking-widest opacity-80">
+                                    <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                                    Student
+                                </div>
+                                <h2 class="text-3xl lg:text-4xl font-bold text-white tracking-tight">Update My Hours</h2>
+                                <p class="text-slate-400">Log your supervised driving hours</p>
+                            </div>
+                        </header>
+
+                        <div class="glass-panel rounded-3xl p-8">
+                            <form id="updateHoursForm" class="space-y-6 max-w-xl">
+                                <div>
+                                    <label class="block text-sm font-semibold text-slate-300 mb-2">Date</label>
+                                    <input type="date" id="hoursDate" class="glass-input text-white w-full px-4 py-3 rounded-xl">
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-300 mb-2">Day Hours</label>
+                                        <input type="number" id="dayHoursInput" step="0.5" min="0" class="glass-input text-white w-full px-4 py-3 rounded-xl" placeholder="0">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-300 mb-2">Night Hours</label>
+                                        <input type="number" id="nightHoursInput" step="0.5" min="0" class="glass-input text-white w-full px-4 py-3 rounded-xl" placeholder="0">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-slate-300 mb-2">Supervisor Name</label>
+                                    <input type="text" id="supervisorName" class="glass-input text-white w-full px-4 py-3 rounded-xl" placeholder="Parent/Guardian name">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-slate-300 mb-2">Notes (optional)</label>
+                                    <textarea id="hoursNotes" rows="2" class="glass-input text-white w-full px-4 py-3 rounded-xl" placeholder="Where did you drive?"></textarea>
+                                </div>
+                                <button type="submit" class="w-full px-6 py-3 rounded-xl bg-green-600 hover:bg-green-500 text-white font-semibold transition-all flex items-center justify-center gap-2">
+                                    <iconify-icon icon="solar:add-circle-linear" width="20"></iconify-icon>
+                                    Log Hours
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
                 </div>
             </main>
         </div>
@@ -1036,26 +1365,105 @@
             totalHours: 0,
             hptNumber: ''
         };
+        
+        // Selected role for login
+        let selectedRole = null;
 
         // Navigation config per role
         const navConfig = {
             student: [
-                { id: 'calculator', icon: 'solar:calculator-minimalistic-linear', label: 'Calculator' }
+                { id: 'my-progress', icon: 'solar:chart-linear', label: 'My Progress' },
+                { id: 'my-hours', icon: 'solar:clock-circle-linear', label: 'Update Hours' }
             ],
             instructor: [
                 { id: 'calculator', icon: 'solar:calculator-minimalistic-linear', label: 'Calculator' },
-                { id: 'students', icon: 'solar:users-group-rounded-linear', label: 'Students' },
+                { id: 'my-students', icon: 'solar:users-group-rounded-linear', label: 'My Students' },
+                { id: 'lessons', icon: 'solar:clipboard-check-linear', label: 'Lesson Log' },
                 { id: 'booking', icon: 'solar:calendar-mark-linear', label: 'Book Test' }
             ],
             admin: [
+                { id: 'dashboard', icon: 'solar:chart-square-linear', label: 'Dashboard' },
+                { id: 'adis', icon: 'solar:steering-wheel-linear', label: 'Instructors (ADIs)' },
+                { id: 'students', icon: 'solar:users-group-rounded-linear', label: 'All Students' },
+                { id: 'reg-keys', icon: 'solar:key-linear', label: 'Registration Keys' },
+                { id: 'divider', label: 'Tools' },
                 { id: 'calculator', icon: 'solar:calculator-minimalistic-linear', label: 'Calculator' },
-                { id: 'students', icon: 'solar:users-group-rounded-linear', label: 'Students' },
                 { id: 'booking', icon: 'solar:calendar-mark-linear', label: 'Book Test' },
-                { id: 'divider', label: 'Admin' },
+                { id: 'divider', label: 'System' },
                 { id: 'users', icon: 'solar:shield-user-linear', label: 'User Management', admin: true },
                 { id: 'audit', icon: 'solar:clipboard-list-linear', label: 'Audit Log', admin: true }
             ]
         };
+        
+        // ============================================
+        // ROLE SELECTION
+        // ============================================
+        function selectRole(role) {
+            selectedRole = role;
+            document.querySelectorAll('.role-card').forEach(card => {
+                card.classList.remove('ring-2', 'ring-blue-500');
+            });
+            event.currentTarget.classList.add('ring-2', 'ring-blue-500');
+            
+            // Show auth screen with selected role
+            setTimeout(() => {
+                document.getElementById('roleSelectScreen').classList.add('hidden');
+                showAuthScreen();
+            }, 300);
+        }
+        
+        function validateRegKey() {
+            const key = document.getElementById('apexRegKey').value.trim().toUpperCase();
+            const errorEl = document.getElementById('regKeyError');
+            const successEl = document.getElementById('regKeySuccess');
+            
+            errorEl.classList.add('hidden');
+            successEl.classList.add('hidden');
+            
+            if (!key) {
+                errorEl.textContent = 'Please enter a registration key';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            // Check key format and validate against database
+            // Keys format: APEX-ROLE-XXXXX (e.g., APEX-ADI-12345, APEX-STU-67890)
+            const keyPattern = /^APEX-(ADI|STU|ADM)-[A-Z0-9]{5}$/;
+            if (!keyPattern.test(key)) {
+                errorEl.textContent = 'Invalid key format. Keys look like: APEX-ADI-XXXXX';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            // Determine role from key
+            if (key.includes('-ADI-')) {
+                selectedRole = 'instructor';
+                successEl.textContent = '✓ Valid Instructor key! Proceeding to sign in...';
+            } else if (key.includes('-STU-')) {
+                selectedRole = 'student';
+                successEl.textContent = '✓ Valid Student key! Proceeding to sign in...';
+            } else if (key.includes('-ADM-')) {
+                selectedRole = 'admin';
+                successEl.textContent = '✓ Valid Admin key! Proceeding to sign in...';
+            }
+            
+            successEl.classList.remove('hidden');
+            
+            // Store key for later validation
+            sessionStorage.setItem('apexRegKey', key);
+            
+            setTimeout(() => {
+                document.getElementById('roleSelectScreen').classList.add('hidden');
+                showAuthScreen();
+            }, 1500);
+        }
+        
+        function showRoleSelectScreen() {
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('roleSelectScreen').classList.remove('hidden');
+        }
 
         // ============================================
         // INITIALIZATION
@@ -1071,7 +1479,8 @@
                 if (clerk.user) {
                     await handleSignedIn();
                 } else {
-                    showAuthScreen();
+                    // Show role selection for new/returning users
+                    showRoleSelectScreen();
                 }
             } catch (error) {
                 console.error('Init error:', error);
@@ -1109,13 +1518,28 @@
             // Get/create user in database
             await getOrCreateDbUser();
             
+            // Use selected role if new user, otherwise use stored role
+            if (selectedRole && (!dbUser?.role || dbUser.role === 'student')) {
+                // Update user role if they selected one and don't have a role yet
+                await updateUserRole(selectedRole);
+            }
+            
             userRole = dbUser?.role || 'student';
             
             updateUserDisplay();
             buildNavigation();
             
-            if (userRole === 'instructor' || userRole === 'admin') {
+            // Load data based on role
+            if (userRole === 'admin') {
+                await loadADIs();
                 await loadStudents();
+                await loadUsers();
+                await loadAuditLog();
+                await loadRegKeys();
+            } else if (userRole === 'instructor') {
+                await loadMyStudents();
+            } else if (userRole === 'student') {
+                await loadMyProgress();
             }
             if (userRole === 'admin') {
                 await loadUsers();
@@ -1123,7 +1547,14 @@
             }
             
             showMainApp();
-            navigateTo('calculator');
+            
+            // Navigate to appropriate page based on role
+            const defaultPages = {
+                admin: 'dashboard',
+                instructor: 'my-students',
+                student: 'my-progress'
+            };
+            navigateTo(defaultPages[userRole] || 'calculator');
         }
         
         async function getOrCreateDbUser() {
@@ -1220,6 +1651,7 @@
         // ============================================
         function showAuthScreen() {
             document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('roleSelectScreen').classList.add('hidden');
             document.getElementById('authScreen').classList.remove('hidden');
             document.getElementById('mainApp').classList.add('hidden');
             
@@ -1240,8 +1672,29 @@
         
         function showMainApp() {
             document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('roleSelectScreen').classList.add('hidden');
             document.getElementById('authScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
+        }
+        
+        // ============================================
+        // KEY GENERATION HELPERS
+        // ============================================
+        async function generateAndShowKey(role) {
+            const key = await generateRegKey(role);
+            document.getElementById('generatedKeyValue').textContent = key;
+            document.getElementById('generatedKeyDisplay').classList.remove('hidden');
+            
+            // Store key in database (would need a reg_keys table)
+            // For now just display it
+            showToast(`Generated ${role} key: ${key}`, 'success');
+        }
+        
+        function copyGeneratedKey() {
+            const key = document.getElementById('generatedKeyValue').textContent;
+            navigator.clipboard.writeText(key).then(() => {
+                showToast('Key copied to clipboard!', 'success');
+            });
         }
         
         async function signOut() {
@@ -1250,10 +1703,268 @@
                 currentUser = null;
                 dbUser = null;
                 userRole = 'student';
-                showAuthScreen();
+                selectedRole = null;
+                showRoleSelectScreen();
             } catch (error) {
                 console.error('Sign out error:', error);
             }
+        }
+        
+        // ============================================
+        // ROLE MANAGEMENT
+        // ============================================
+        async function updateUserRole(newRole) {
+            try {
+                const { error } = await supabaseClient
+                    .from('users')
+                    .update({ role: newRole })
+                    .eq('clerk_user_id', currentUser.id);
+                
+                if (!error) {
+                    dbUser.role = newRole;
+                    userRole = newRole;
+                }
+            } catch (e) {
+                console.error('Error updating role:', e);
+            }
+        }
+        
+        // ============================================
+        // ADI MANAGEMENT (Admin only)
+        // ============================================
+        let adis = [];
+        
+        async function loadADIs() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('role', 'instructor')
+                    .order('instructor_name');
+                
+                if (!error) {
+                    adis = data || [];
+                    renderADITable();
+                }
+            } catch (e) {
+                console.error('Error loading ADIs:', e);
+            }
+        }
+        
+        function renderADITable() {
+            const tbody = document.getElementById('adiTableBody');
+            const emptyState = document.getElementById('adisEmptyState');
+            
+            if (!tbody) return;
+            
+            if (adis.length === 0) {
+                tbody.innerHTML = '';
+                if (emptyState) emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            if (emptyState) emptyState.classList.add('hidden');
+            
+            tbody.innerHTML = adis.map(adi => `
+                <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold">
+                                ${(adi.instructor_name || 'U').charAt(0).toUpperCase()}
+                            </div>
+                            <span class="font-medium text-white">${adi.instructor_name || 'Unknown'}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-slate-400">${adi.email || '-'}</td>
+                    <td class="px-6 py-4 text-slate-400 font-mono">${adi.adi_number || '-'}</td>
+                    <td class="px-6 py-4 text-slate-400">${adi.student_count || 0}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 rounded-lg text-xs font-semibold ${adi.is_active ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}">
+                            ${adi.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <button onclick="editADI('${adi.id}')" class="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-all">
+                            <iconify-icon icon="solar:pen-linear" width="18"></iconify-icon>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function openAddADIModal() {
+            // For now, show a simple prompt - can be expanded to a full modal later
+            const email = prompt('Enter ADI email address:');
+            if (email) {
+                const name = prompt('Enter ADI name:');
+                if (name) {
+                    const adiNumber = prompt('Enter ADI number (optional):');
+                    addADI(email, name, adiNumber);
+                }
+            }
+        }
+        
+        async function addADI(email, name, adiNumber) {
+            try {
+                // Create invitation or add ADI directly
+                const { error } = await supabaseClient
+                    .from('users')
+                    .insert({
+                        email: email,
+                        instructor_name: name,
+                        adi_number: adiNumber || null,
+                        role: 'instructor',
+                        clerk_user_id: 'pending_' + Date.now(), // Placeholder until they sign up
+                        is_active: true
+                    });
+                
+                if (!error) {
+                    showToast('ADI added successfully!', 'success');
+                    await loadADIs();
+                } else {
+                    showToast('Error adding ADI: ' + error.message, 'error');
+                }
+            } catch (e) {
+                console.error('Error adding ADI:', e);
+                showToast('Error adding ADI', 'error');
+            }
+        }
+        
+        function editADI(id) {
+            // Placeholder for edit functionality
+            showToast('Edit ADI functionality coming soon', 'info');
+        }
+        
+        // ============================================
+        // REGISTRATION KEYS (Admin only)
+        // ============================================
+        let regKeys = [];
+        
+        async function loadRegKeys() {
+            // Registration keys would be stored in a separate table
+            // For now, use placeholder
+            regKeys = [];
+            renderRegKeys();
+        }
+        
+        function renderRegKeys() {
+            const container = document.getElementById('regKeysContainer');
+            if (!container) return;
+            // Render registration keys UI
+        }
+        
+        async function generateRegKey(role) {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 5; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            
+            const prefix = role === 'instructor' ? 'ADI' : role === 'admin' ? 'ADM' : 'STU';
+            return `APEX-${prefix}-${code}`;
+        }
+        
+        // ============================================
+        // MY STUDENTS (Instructor only)
+        // ============================================
+        let myStudents = [];
+        
+        async function loadMyStudents() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('students')
+                    .select('*')
+                    .eq('user_id', dbUser.id)
+                    .order('last_name');
+                
+                if (!error) {
+                    myStudents = data || [];
+                    renderMyStudentsTable();
+                }
+            } catch (e) {
+                console.error('Error loading my students:', e);
+            }
+        }
+        
+        function renderMyStudentsTable() {
+            const tbody = document.getElementById('myStudentTableBody');
+            if (!tbody) return;
+            
+            if (myStudents.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">No students yet. Add your first student to get started.</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = myStudents.map(student => `
+                <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                    <td class="px-6 py-4 font-medium text-white">${student.first_name} ${student.last_name}</td>
+                    <td class="px-6 py-4 text-slate-400 font-mono">${student.licence_number || '-'}</td>
+                    <td class="px-6 py-4 text-slate-400">${student.total_hours || 0} hrs</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 rounded-lg text-xs font-semibold ${student.eligibility_status === 'ELIGIBLE' ? 'bg-green-500/20 text-green-400' : 'bg-amber-500/20 text-amber-400'}">
+                            ${student.eligibility_status || 'Pending'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-slate-400">${student.earliest_eligible_date || '-'}</td>
+                    <td class="px-6 py-4 text-right">
+                        <button onclick="viewStudent('${student.id}')" class="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-all">
+                            <iconify-icon icon="solar:eye-linear" width="18"></iconify-icon>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        // ============================================
+        // MY PROGRESS (Student only)
+        // ============================================
+        let myProgress = null;
+        
+        async function loadMyProgress() {
+            try {
+                // Find student record linked to current user's email
+                const { data, error } = await supabaseClient
+                    .from('students')
+                    .select('*')
+                    .eq('email', currentUser.primaryEmailAddress?.emailAddress)
+                    .single();
+                
+                if (!error && data) {
+                    myProgress = data;
+                    renderMyProgress();
+                }
+            } catch (e) {
+                console.error('Error loading my progress:', e);
+            }
+        }
+        
+        function renderMyProgress() {
+            // Update the my-progress page with student's own data
+            if (!myProgress) return;
+            
+            const container = document.getElementById('myProgressContent');
+            if (!container) return;
+            
+            container.innerHTML = `
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="glass-panel p-6 rounded-2xl text-center">
+                        <div class="text-3xl font-bold text-white">${myProgress.total_hours || 0}</div>
+                        <div class="text-sm text-slate-400">Total Hours</div>
+                    </div>
+                    <div class="glass-panel p-6 rounded-2xl text-center">
+                        <div class="text-3xl font-bold text-white">${myProgress.night_hours || 0}</div>
+                        <div class="text-sm text-slate-400">Night Hours</div>
+                    </div>
+                    <div class="glass-panel p-6 rounded-2xl text-center">
+                        <div class="text-3xl font-bold text-white">${myProgress.hours_required - myProgress.total_hours}</div>
+                        <div class="text-sm text-slate-400">Hours Remaining</div>
+                    </div>
+                    <div class="glass-panel p-6 rounded-2xl text-center">
+                        <div class="text-3xl font-bold ${myProgress.eligibility_status === 'ELIGIBLE' ? 'text-green-400' : 'text-amber-400'}">${myProgress.eligibility_status === 'ELIGIBLE' ? '✓' : '...'}</div>
+                        <div class="text-sm text-slate-400">${myProgress.eligibility_status || 'Pending'}</div>
+                    </div>
+                </div>
+            `;
         }
 
         // ============================================
