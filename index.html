@@ -2,10 +2,14 @@
 <html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>APEX - P1 Eligibility System</title>
     <meta name="description" content="APEX Driving School - P1 Eligibility Calculator and Student Management">
     <meta name="theme-color" content="#020617">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="APEX">
+    <meta name="mobile-web-app-capable" content="yes">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -50,6 +54,7 @@
             background-color: #020617;
             color: #e2e8f0;
             overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         
@@ -78,11 +83,14 @@
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        .glass-panel:hover {
-            background: rgba(30, 41, 59, 0.4);
-            border-color: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.3), 0 0 15px rgba(59, 130, 246, 0.1), inset 0 0 20px rgba(255, 255, 255, 0.02);
-            transform: translateY(-2px);
+        /* Disable hover effects on touch devices */
+        @media (hover: hover) {
+            .glass-panel:hover {
+                background: rgba(30, 41, 59, 0.4);
+                border-color: rgba(255, 255, 255, 0.15);
+                box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.3), 0 0 15px rgba(59, 130, 246, 0.1), inset 0 0 20px rgba(255, 255, 255, 0.02);
+                transform: translateY(-2px);
+            }
         }
         
         .glass-panel-static {
@@ -97,6 +105,7 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
             backdrop-filter: blur(4px);
+            font-size: 16px; /* Prevents iOS zoom on focus */
         }
         .glass-input:focus {
             background: rgba(0, 0, 0, 0.4);
@@ -131,19 +140,20 @@
         .delay-200 { animation-delay: 0.2s; }
         .delay-300 { animation-delay: 0.3s; }
 
-        /* Custom UI Elements */
+        /* Custom UI Elements - Touch Friendly */
         input[type=range] {
             -webkit-appearance: none;
             background: transparent;
+            height: 44px; /* Touch-friendly height */
         }
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            height: 20px;
-            width: 20px;
+            height: 28px;
+            width: 28px;
             border-radius: 50%;
             background: #facc15;
             cursor: pointer;
-            margin-top: -8px;
+            margin-top: -12px;
             box-shadow: 0 0 20px rgba(250, 204, 21, 0.6), inset 0 2px 4px rgba(255,255,255,0.8);
             border: 2px solid rgba(255,255,255,0.2);
             transition: transform 0.1s;
@@ -151,10 +161,10 @@
         input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
-            height: 4px;
+            height: 6px;
             cursor: pointer;
             background: rgba(255,255,255,0.1);
-            border-radius: 2px;
+            border-radius: 3px;
         }
 
         .custom-checkbox:checked + div {
@@ -174,19 +184,26 @@
 
         .hidden { display: none !important; }
         
-        /* Table styles */
+        /* Table styles - Responsive */
         .data-table { width: 100%; border-collapse: separate; border-spacing: 0; }
         .data-table th { 
             text-align: left; padding: 12px 16px; font-size: 10px; font-weight: 700; 
             text-transform: uppercase; letter-spacing: 0.1em; color: #64748b;
             border-bottom: 1px solid rgba(255,255,255,0.05);
+            white-space: nowrap;
         }
         .data-table td { 
             padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle;
         }
         .data-table tbody tr:hover { background: rgba(255,255,255,0.02); }
         
-        /* Mobile sidebar */
+        /* Mobile table scroll hint */
+        .table-scroll-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Mobile sidebar - Full screen on small devices */
         .sidebar-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.5);
             backdrop-filter: blur(4px); z-index: 40; opacity: 0;
@@ -200,10 +217,17 @@
         }
         .mobile-sidebar.active { transform: translateX(0); }
         
-        /* Toast */
+        /* Toast - Position for mobile */
         .toast-container {
-            position: fixed; bottom: 24px; right: 24px; z-index: 1000;
+            position: fixed; bottom: 24px; right: 24px; left: 24px; z-index: 1000;
             display: flex; flex-direction: column; gap: 8px;
+        }
+        @media (min-width: 640px) {
+            .toast-container {
+                left: auto;
+                width: auto;
+                min-width: 300px;
+            }
         }
         .toast {
             padding: 16px 20px; border-radius: 12px; font-size: 14px; font-weight: 500;
@@ -212,6 +236,65 @@
         .toast-success { background: rgba(34, 197, 94, 0.9); color: white; }
         .toast-error { background: rgba(239, 68, 68, 0.9); color: white; }
         .toast-info { background: rgba(59, 130, 246, 0.9); color: white; }
+        
+        /* Touch-friendly buttons */
+        button, .btn {
+            min-height: 44px;
+            cursor: pointer;
+        }
+        
+        /* Safe area for notched devices */
+        @supports (padding: max(0px)) {
+            body {
+                padding-left: max(0px, env(safe-area-inset-left));
+                padding-right: max(0px, env(safe-area-inset-right));
+                padding-bottom: max(0px, env(safe-area-inset-bottom));
+            }
+        }
+        
+        /* iPad-specific styles */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .glass-panel {
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+            }
+        }
+        
+        /* Landscape phone */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .mobile-sidebar {
+                width: 240px;
+            }
+        }
+        
+        /* Desktop sidebar always visible */
+        @media (min-width: 1024px) {
+            .desktop-sidebar {
+                display: flex !important;
+            }
+            .mobile-header {
+                display: none !important;
+            }
+        }
+        
+        /* Mobile/Tablet header visible */
+        @media (max-width: 1023px) {
+            .desktop-sidebar {
+                display: none !important;
+            }
+            .mobile-header {
+                display: flex !important;
+            }
+        }
+        
+        /* Reduce motion for users who prefer it */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
     </style>
 </head>
 <body class="selection:bg-blue-500/30 selection:text-blue-100">
@@ -350,25 +433,25 @@
     <div id="mainApp" class="hidden">
         <div class="flex min-h-screen relative z-10">
 
-            <!-- Sidebar Overlay (Mobile) -->
+            <!-- Sidebar Overlay (Mobile/Tablet) -->
             <div id="sidebarOverlay" class="sidebar-overlay lg:hidden" onclick="closeSidebar()"></div>
 
             <!-- Sidebar -->
-            <aside id="sidebar" class="mobile-sidebar lg:relative lg:transform-none flex flex-col w-72 lg:fixed inset-y-0 left-0 border-r border-white/5 bg-slate-950/80 lg:bg-slate-950/20 backdrop-blur-xl z-50 shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
+            <aside id="sidebar" class="desktop-sidebar mobile-sidebar lg:relative lg:transform-none flex flex-col w-72 lg:fixed inset-y-0 left-0 border-r border-white/5 bg-slate-950/80 lg:bg-slate-950/20 backdrop-blur-xl z-50 shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
                 
                 <!-- Logo -->
-                <div class="p-6 flex items-center gap-4 group">
-                    <div class="relative w-11 h-11 transition-transform group-hover:scale-110 duration-300">
+                <div class="p-4 lg:p-6 flex items-center gap-4 group">
+                    <div class="relative w-11 h-11 transition-transform group-hover:scale-110 duration-300 flex-shrink-0">
                         <div class="absolute inset-0 bg-blue-500 blur-lg opacity-40 rounded-xl group-hover:opacity-60 transition-opacity"></div>
                         <div class="relative w-full h-full rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 flex items-center justify-center">
                             <span class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-200">A</span>
                         </div>
                     </div>
-                    <div>
+                    <div class="flex-1 min-w-0">
                         <h1 class="font-bold text-2xl text-white leading-none tracking-tight">APEX</h1>
-                        <button onclick="toggleRoleSwitcher()" id="sidebarRoleBadge" class="text-[10px] font-semibold tracking-[0.2em] uppercase opacity-80 text-green-400 hover:opacity-100 cursor-pointer">Student ▾</button>
+                        <button onclick="toggleRoleSwitcher()" id="sidebarRoleBadge" class="text-[10px] font-semibold tracking-[0.2em] uppercase opacity-80 text-green-400 hover:opacity-100 cursor-pointer active:opacity-60">Student ▾</button>
                     </div>
-                    <button class="lg:hidden ml-auto text-slate-400 hover:text-white" onclick="closeSidebar()">
+                    <button class="lg:hidden w-11 h-11 rounded-xl flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 active:scale-95 transition-all" onclick="closeSidebar()">
                         <iconify-icon icon="solar:close-circle-linear" width="24"></iconify-icon>
                     </button>
                 </div>
@@ -376,38 +459,38 @@
                 <!-- Role Switcher Dropdown -->
                 <div id="roleSwitcherDropdown" class="hidden mx-4 mb-4 glass-panel rounded-xl overflow-hidden">
                     <div class="p-2 text-xs text-slate-500 uppercase tracking-wider border-b border-white/10">Switch Role</div>
-                    <button onclick="switchRole('admin')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors">
-                        <iconify-icon icon="solar:shield-user-linear" width="18"></iconify-icon>
+                    <button onclick="switchRole('admin')" class="w-full flex items-center gap-3 px-4 py-4 text-sm text-red-400 hover:bg-red-500/10 active:bg-red-500/20 transition-colors">
+                        <iconify-icon icon="solar:shield-user-linear" width="20"></iconify-icon>
                         Admin
                     </button>
-                    <button onclick="switchRole('instructor')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-blue-400 hover:bg-blue-500/10 transition-colors">
-                        <iconify-icon icon="solar:steering-wheel-linear" width="18"></iconify-icon>
+                    <button onclick="switchRole('instructor')" class="w-full flex items-center gap-3 px-4 py-4 text-sm text-blue-400 hover:bg-blue-500/10 active:bg-blue-500/20 transition-colors">
+                        <iconify-icon icon="solar:steering-wheel-linear" width="20"></iconify-icon>
                         Instructor (ADI)
                     </button>
-                    <button onclick="switchRole('student')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-green-400 hover:bg-green-500/10 transition-colors">
-                        <iconify-icon icon="solar:user-linear" width="18"></iconify-icon>
+                    <button onclick="switchRole('student')" class="w-full flex items-center gap-3 px-4 py-4 text-sm text-green-400 hover:bg-green-500/10 active:bg-green-500/20 transition-colors">
+                        <iconify-icon icon="solar:user-linear" width="20"></iconify-icon>
                         Student
                     </button>
                 </div>
 
                 <!-- Navigation -->
-                <nav id="sidebarNav" class="flex-1 px-4 space-y-2 mt-2 overflow-y-auto"></nav>
+                <nav id="sidebarNav" class="flex-1 px-3 lg:px-4 space-y-1 mt-2 overflow-y-auto overscroll-contain"></nav>
 
                 <!-- User Profile -->
-                <div class="p-4 border-t border-white/5 bg-gradient-to-t from-black/20 to-transparent">
-                    <div class="glass-panel-static p-3 rounded-2xl flex items-center gap-3 hover:bg-white/5 cursor-pointer transition-colors" onclick="toggleUserMenu()">
-                        <div id="userAvatar" class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-bold shadow-lg ring-2 ring-white/10">U</div>
-                        <div class="flex-1 overflow-hidden">
+                <div class="p-3 lg:p-4 border-t border-white/5 bg-gradient-to-t from-black/20 to-transparent">
+                    <div class="glass-panel-static p-3 rounded-2xl flex items-center gap-3 hover:bg-white/5 active:bg-white/10 cursor-pointer transition-colors" onclick="toggleUserMenu()">
+                        <div id="userAvatar" class="w-11 h-11 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-bold shadow-lg ring-2 ring-white/10 flex-shrink-0">U</div>
+                        <div class="flex-1 min-w-0 overflow-hidden">
                             <div id="userName" class="text-sm font-semibold text-white truncate">User</div>
                             <div id="userEmail" class="text-[10px] text-slate-400 truncate">user@example.com</div>
                         </div>
-                        <iconify-icon icon="solar:alt-arrow-down-linear" class="text-slate-400"></iconify-icon>
+                        <iconify-icon icon="solar:alt-arrow-down-linear" class="text-slate-400 flex-shrink-0"></iconify-icon>
                     </div>
                     
                     <!-- User Menu Dropdown -->
                     <div id="userMenuDropdown" class="hidden mt-2 glass-panel rounded-xl overflow-hidden">
-                        <button onclick="signOut()" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors">
-                            <iconify-icon icon="solar:logout-2-linear" width="18"></iconify-icon>
+                        <button onclick="signOut()" class="w-full flex items-center gap-3 px-4 py-4 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 active:bg-red-500/20 transition-colors">
+                            <iconify-icon icon="solar:logout-2-linear" width="20"></iconify-icon>
                             Sign Out
                         </button>
                     </div>
@@ -417,17 +500,22 @@
             <!-- Main Content -->
             <main class="lg:ml-72 w-full min-h-screen relative z-10">
                 
-                <!-- Mobile Header -->
-                <div class="lg:hidden sticky top-0 z-30 glass-panel-static p-4 flex items-center justify-between">
-                    <button onclick="openSidebar()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white">
-                        <iconify-icon icon="solar:hamburger-menu-linear" width="20"></iconify-icon>
+                <!-- Mobile/Tablet Header -->
+                <div class="mobile-header lg:hidden sticky top-0 z-30 glass-panel-static px-4 py-3 flex items-center justify-between safe-area-inset">
+                    <button onclick="openSidebar()" class="w-11 h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-95 transition-transform">
+                        <iconify-icon icon="solar:hamburger-menu-linear" width="22"></iconify-icon>
                     </button>
-                    <span class="font-bold text-white">APEX</span>
-                    <div id="mobileUserAvatar" class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-bold">U</div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-200">A</span>
+                        <span class="font-bold text-white">APEX</span>
+                    </div>
+                    <button onclick="toggleUserMenu()" class="w-11 h-11">
+                        <div id="mobileUserAvatar" class="w-11 h-11 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-bold ring-2 ring-white/10">U</div>
+                    </button>
                 </div>
 
                 <!-- Page Content Container -->
-                <div class="p-6 lg:p-10 max-w-[1600px] mx-auto">
+                <div class="p-4 sm:p-6 lg:p-10 max-w-[1600px] mx-auto">
                     
                     <!-- ========== CALCULATOR PAGE ========== -->
                     <div id="page-calculator" class="page-content">
@@ -1690,8 +1778,8 @@
                 const isAdmin = item.admin;
                 return `
                     <a href="#" onclick="navigateTo('${item.id}'); return false;" id="nav-${item.id}"
-                       class="nav-item group flex items-center gap-3 px-4 py-3.5 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-300">
-                        <iconify-icon icon="${item.icon}" width="22" class="group-hover:scale-110 transition-transform duration-300 ${isAdmin ? 'text-red-400' : ''}"></iconify-icon>
+                       class="nav-item group flex items-center gap-3 px-4 py-4 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 active:bg-white/10 active:scale-[0.98] transition-all duration-200 touch-manipulation">
+                        <iconify-icon icon="${item.icon}" width="22" class="group-hover:scale-110 transition-transform duration-300 flex-shrink-0 ${isAdmin ? 'text-red-400' : ''}"></iconify-icon>
                         <span class="font-medium text-sm">${item.label}</span>
                     </a>
                 `;
