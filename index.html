@@ -1581,12 +1581,9 @@
                 // Wait for Clerk
                 await waitForClerk();
                 
-                if (clerk.user) {
-                    await handleSignedIn();
-                } else {
-                    // Show role selection for new/returning users
-                    showRoleSelectScreen();
-                }
+                // Always show role selection first (user must choose how to log in)
+                showRoleSelectScreen();
+                
             } catch (error) {
                 console.error('Init error:', error);
                 showToast('Failed to initialize app', 'error');
@@ -1620,40 +1617,33 @@
                 console.warn('Could not get Supabase token:', e);
             }
             
-            // Get/create user in database
+            // Get/create user in database with selected role
             await getOrCreateDbUser();
             
-            // Use selected role if new user, otherwise use stored role
-            if (selectedRole && (!dbUser?.role || dbUser.role === 'student')) {
-                // Update user role if they selected one and don't have a role yet
-                await updateUserRole(selectedRole);
+            // Use the role they selected on the role selection screen
+            userRole = selectedRole || dbUser?.role || 'student';
+            
+            // Update database with selected role
+            if (selectedRole && dbUser) {
+                try {
+                    await supabaseClient
+                        .from('users')
+                        .update({ role: selectedRole })
+                        .eq('clerk_user_id', currentUser.id);
+                    dbUser.role = selectedRole;
+                } catch (e) {
+                    console.warn('Could not update role:', e);
+                }
             }
             
-            userRole = dbUser?.role || 'student';
-            
+            // Update UI
             updateUserDisplay();
             buildNavigation();
             
-            // Load data based on role
-            if (userRole === 'admin') {
-                await loadADIs();
-                await loadStudents();
-                await loadUsers();
-                await loadAuditLog();
-                await loadRegKeys();
-            } else if (userRole === 'instructor') {
-                await loadMyStudents();
-            } else if (userRole === 'student') {
-                await loadMyProgress();
-            }
-            if (userRole === 'admin') {
-                await loadUsers();
-                await loadAuditLog();
-            }
-            
+            // Show main app
             showMainApp();
             
-            // Navigate to appropriate page based on role
+            // Navigate to default page for role
             const defaultPages = {
                 admin: 'dashboard',
                 instructor: 'my-students',
@@ -1719,52 +1709,38 @@
         }
         
         async function switchRole(newRole) {
-            // Prevent multiple clicks
-            if (window.switchingRole) return;
-            window.switchingRole = true;
+            // Close dropdown immediately
+            document.getElementById('roleSwitcherDropdown').classList.add('hidden');
             
-            try {
-                // Update role in database
-                const { error } = await supabaseClient
+            // Update local state
+            userRole = newRole;
+            if (dbUser) dbUser.role = newRole;
+            
+            // Update database (don't wait for it)
+            if (currentUser) {
+                supabaseClient
                     .from('users')
                     .update({ role: newRole })
-                    .eq('clerk_user_id', currentUser.id);
-                
-                if (error) {
-                    showToast('Error switching role: ' + error.message, 'error');
-                    window.switchingRole = false;
-                    return;
-                }
-                
-                // Update local state
-                userRole = newRole;
-                if (dbUser) dbUser.role = newRole;
-                
-                // Close dropdown
-                document.getElementById('roleSwitcherDropdown').classList.add('hidden');
-                
-                // Update UI
-                const roleBadge = document.getElementById('sidebarRoleBadge');
-                const roleLabels = { student: 'Student', instructor: 'Instructor', admin: 'Admin' };
-                const roleColors = { student: 'text-green-400', instructor: 'text-blue-400', admin: 'text-red-400' };
-                roleBadge.innerHTML = `${roleLabels[newRole] || 'User'} ▾`;
-                roleBadge.className = `text-[10px] font-semibold tracking-[0.2em] uppercase opacity-80 hover:opacity-100 cursor-pointer ${roleColors[newRole] || ''}`;
-                
-                // Rebuild navigation
-                buildNavigation();
-                
-                // Navigate to default page for role
-                const defaultPages = { admin: 'dashboard', instructor: 'my-students', student: 'my-progress' };
-                navigateTo(defaultPages[newRole] || 'calculator');
-                
-                showToast(`Switched to ${roleLabels[newRole]} role`, 'success');
-                
-            } catch (e) {
-                console.error('Error switching role:', e);
-                showToast('Error switching role', 'error');
+                    .eq('clerk_user_id', currentUser.id)
+                    .then(() => console.log('Role updated in DB'))
+                    .catch(e => console.warn('Could not update role in DB:', e));
             }
             
-            window.switchingRole = false;
+            // Update badge
+            const roleBadge = document.getElementById('sidebarRoleBadge');
+            const roleLabels = { student: 'Student', instructor: 'Instructor', admin: 'Admin' };
+            const roleColors = { student: 'text-green-400', instructor: 'text-blue-400', admin: 'text-red-400' };
+            roleBadge.innerHTML = `${roleLabels[newRole] || 'User'} ▾`;
+            roleBadge.className = `text-[10px] font-semibold tracking-[0.2em] uppercase opacity-80 hover:opacity-100 cursor-pointer ${roleColors[newRole] || ''}`;
+            
+            // Rebuild navigation
+            buildNavigation();
+            
+            // Navigate to default page for role
+            const defaultPages = { admin: 'dashboard', instructor: 'my-students', student: 'my-progress' };
+            navigateTo(defaultPages[newRole] || 'calculator');
+            
+            showToast(`Switched to ${roleLabels[newRole]}`, 'success');
         }
         
         function buildNavigation() {
